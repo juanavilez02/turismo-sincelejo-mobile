@@ -10,6 +10,7 @@ import {
   StyleSheet,
   ScrollView,
   StatusBar,
+  Animated,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import LugarCard from "../components/LugarCard";
@@ -41,6 +42,8 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
   const [imagenHeroIndex, setImagenHeroIndex] = useState(0);
   const [favoritos, setFavoritos] = useState(new Set());
   const [soloFavoritos, setSoloFavoritos] = useState(false);
+  // Capas de opacidad del hero: una por foto, como las dos capas del crossfade web
+  const [opacidadesHero] = useState(() => FOTOS_HERO.map((_, i) => new Animated.Value(i === 0 ? 1 : 0)));
 
   // ---------- Carga de datos ----------
   const cargarLugares = useCallback(async (paginaDestino = 1, filtros) => {
@@ -108,14 +111,26 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
     return () => clearTimeout(t);
   }, [buscar, idCategoria]);
 
-  // ---------- Crossfade del hero ----------
+  // ---------- Crossfade del hero (fundido suave, como el sitio web) ----------
+  // Mismo ritmo que la web: 6 segundos por foto, y el cambio se hace con un
+  // fundido animado de 1.2 s: la saliente baja su opacidad mientras entra la nueva.
   useEffect(() => {
     if (FOTOS_HERO.length < 2) return;
     const t = setInterval(() => {
       setImagenHeroIndex((i) => (i + 1) % FOTOS_HERO.length);
-    }, 5000);
+    }, 6000);
     return () => clearInterval(t);
   }, []);
+
+  useEffect(() => {
+    opacidadesHero.forEach((anim, i) => {
+      Animated.timing(anim, {
+        toValue: i === imagenHeroIndex ? 1 : 0,
+        duration: 1200,
+        useNativeDriver: true,
+      }).start();
+    });
+  }, [imagenHeroIndex]);
 
   const hayFiltros = buscar.trim().length > 0 || idCategoria > 0;
 
@@ -144,14 +159,10 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
             {/* ============ HERO (como la web: foto + gradiente + buscador) ============ */}
             <View style={styles.hero}>
               {FOTOS_HERO.map((url, i) => (
-                <Image
+                <Animated.Image
                   key={url}
                   source={{ uri: url }}
-                  style={[
-                    styles.heroFondo,
-                    i === imagenHeroIndex && styles.heroFondoVisible,
-                    i !== imagenHeroIndex && styles.heroFondoOculto,
-                  ]}
+                  style={[styles.heroFondo, { opacity: opacidadesHero[i] }]}
                   resizeMode="cover"
                 />
               ))}
@@ -378,12 +389,6 @@ const styles = StyleSheet.create({
   },
   heroFondo: {
     ...StyleSheet.absoluteFillObject,
-  },
-  heroFondoVisible: {
-    opacity: 1,
-  },
-  heroFondoOculto: {
-    opacity: 0,
   },
   heroGradiente: {
     ...StyleSheet.absoluteFillObject,
