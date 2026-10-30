@@ -1,19 +1,32 @@
 import React from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
+import { obtenerUrlImagen } from "../api";
+import { colores, sombras, fuentes } from "../theme";
 
 export default function LugarCard({ lugar, onPress }) {
+  const urlImagen = obtenerUrlImagen(lugar.imagen);
+
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress}>
-      <Image
-        source={{ uri: lugar.imagen }}
-        style={styles.imagen}
-      />
+    <TouchableOpacity
+      style={[styles.card, sombras.reposo]}
+      onPress={onPress}
+      activeOpacity={0.85}
+    >
+      {urlImagen ? (
+        <Image
+          source={{ uri: urlImagen }}
+          style={styles.imagen}
+          resizeMode="cover"
+        />
+      ) : (
+        <View style={[styles.imagen, styles.imagenVacia]}>
+          <Text style={styles.imagenVaciaTexto}>📷</Text>
+        </View>
+      )}
       <View style={styles.contenido}>
         <Text style={styles.titulo}>{lugar.nombre}</Text>
         <Text style={styles.categoria}>{lugar.categoria}</Text>
-        <Text style={styles.direccion}>
-          📍 {lugar.direccion}
-        </Text>
+        <Text style={styles.direccion}>📍 {lugar.direccion}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -21,39 +34,43 @@ export default function LugarCard({ lugar, onPress }) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: colores.superficie,
     borderRadius: 16,
     overflow: "hidden",
-    margin: 10,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    width: "45%",
+    margin: 8,
+    flex: 1,
   },
   imagen: {
     width: "100%",
-    height: 180,
-    borderRadius: 12,
+    height: 130,
+  },
+  imagenVacia: {
+    backgroundColor: colores.primarioSuave,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  imagenVaciaTexto: {
+    fontSize: 32,
   },
   contenido: {
     padding: 12,
   },
   titulo: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#1e293b",
+    fontSize: 14,
+    fontFamily: fuentes.semibold,
+    color: colores.tinta,
     marginBottom: 4,
   },
   categoria: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#0D9488",
+    fontSize: 11,
+    fontFamily: fuentes.semibold,
+    color: colores.primario,
     marginBottom: 8,
   },
   direccion: {
-    fontSize: 13,
-    color: "#64748b",
+    fontSize: 12,
+    lineHeight: 17,
+    fontFamily: fuentes.regular,
+    color: colores.tintaSuave,
   },
 });
