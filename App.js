@@ -1,6 +1,13 @@
 import React, { useState } from "react";
 import { SafeAreaView, StyleSheet, StatusBar, ActivityIndicator, View, Text } from "react-native";
 import { useFonts } from "@expo-google-fonts/poppins";
+import {
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+  Poppins_800ExtraBold,
+} from "@expo-google-fonts/poppins";
 import HomeScreen from "./src/screens/HomeScreen";
 import DetalleScreen from "./src/screens/DetalleScreen";
 import LoginScreen from "./src/screens/LoginScreen";
@@ -13,11 +20,11 @@ export default function App() {
 
   // Carga de Poppins (las mismas variantes que usa la web: 400/500/600/700/800)
   const [fuentesCargadas] = useFonts({
-    Poppins_400Regular: require("@expo-google-fonts/poppins/Poppins_400Regular.js"),
-    Poppins_500Medium: require("@expo-google-fonts/poppins/Poppins_500Medium.js"),
-    Poppins_600SemiBold: require("@expo-google-fonts/poppins/Poppins_600SemiBold.js"),
-    Poppins_700Bold: require("@expo-google-fonts/poppins/Poppins_700Bold.js"),
-    Poppins_800ExtraBold: require("@expo-google-fonts/poppins/Poppins_800ExtraBold.js"),
+    Poppins_400Regular,
+    Poppins_500Medium,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+    Poppins_800ExtraBold,
   });
 
   const abrirDetalle = (lugar) => {
