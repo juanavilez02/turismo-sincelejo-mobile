@@ -120,7 +120,7 @@ export default function FormularioLugarScreen({ lugar, token, onGuardar, onCance
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           {/* Encabezado como el sidebar del admin web */}
           <Text style={styles.titulo}>
             {editando ? "✏️ Editar lugar" : "➕ Nuevo lugar"}

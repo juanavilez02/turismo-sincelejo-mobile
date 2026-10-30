@@ -17,6 +17,7 @@ import { colores, radio, sombras, fuentes } from "../theme";
 export default function LoginScreen({ onLogin, onVolver }) {
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
+  const [mostrarPassword, setMostrarPassword] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
 
@@ -48,7 +49,7 @@ export default function LoginScreen({ onLogin, onVolver }) {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           {/* Marca, como el navbar de la web */}
           <Text style={styles.marca}>
             Turismo<Text style={styles.marcaFuerte}>Sincelejo</Text>
@@ -74,14 +75,28 @@ export default function LoginScreen({ onLogin, onVolver }) {
             />
 
             <Text style={styles.etiqueta}>Contraseña</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="••••••••"
-              placeholderTextColor={colores.tintaSuave}
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-            />
+            <View style={styles.contenedorPassword}>
+              <TextInput
+                style={styles.inputPassword}
+                placeholder="••••••••"
+                placeholderTextColor={colores.tintaSuave}
+                secureTextEntry={!mostrarPassword}
+                value={password}
+                onChangeText={setPassword}
+                autoCapitalize="none"
+                autoComplete="off"
+              />
+              <TouchableOpacity
+                style={styles.botonOjito}
+                onPress={() => setMostrarPassword(!mostrarPassword)}
+                activeOpacity={0.6}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              >
+                <Text style={styles.ojitoTexto}>
+                  {mostrarPassword ? "🙈" : "👁️"}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
             {error && <Text style={styles.error}>⚠️ {error}</Text>}
 
@@ -184,6 +199,30 @@ const styles = StyleSheet.create({
     fontFamily: fuentes.regular,
     fontSize: 14,
     marginBottom: 14,
+  },
+  contenedorPassword: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colores.fondo,
+    borderWidth: 1,
+    borderColor: colores.borde,
+    borderRadius: 12,
+    marginBottom: 14,
+  },
+  inputPassword: {
+    flex: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    color: colores.tinta,
+    fontFamily: fuentes.regular,
+    fontSize: 14,
+  },
+  botonOjito: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  ojitoTexto: {
+    fontSize: 18,
   },
   error: {
     color: colores.peligro,

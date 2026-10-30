@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
   fab: {
     position: "absolute",
     right: 16,
-    bottom: 20,
+    bottom: 46,
     backgroundColor: colores.acento,
     borderRadius: radio.pill,
     paddingVertical: 13,

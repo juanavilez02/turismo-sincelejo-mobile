@@ -11,6 +11,9 @@
     "assetBundlePatterns": [
       "**/*"
     ],
+    "android": {
+      "softwareKeyboardLayoutMode": "resize"
+    },
     "ios": {
       "supportsTablet": true
     },
