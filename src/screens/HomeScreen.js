@@ -161,16 +161,25 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
           <View>
             {/* ============ HERO (como la web: foto + gradiente + buscador) ============ */}
             <View style={styles.hero}>
-              {/* Foto base permanente: garantiza que NUNCA se asome el fondo
-                  negro entre fundidos, mientras las capas animadas trabajan */}
-              <Image source={{ uri: FOTOS_HERO[0] }} style={styles.heroFondo} resizeMode="cover" />
-              {FOTOS_HERO.map((url, i) => (
-                <Animated.Image
-                  key={url}
-                  source={{ uri: url }}
-                  style={[styles.heroFondo, { opacity: opacidadesHero[i] }]}
+              {/* Capa base permanente: garantiza que NUNCA se asome el fondo negro */}
+              <View style={styles.capaHero}>
+                <Image
+                  source={{ uri: FOTOS_HERO[0] }}
+                  style={styles.capaHeroImagen}
                   resizeMode="cover"
                 />
+              </View>
+              {FOTOS_HERO.map((url, i) => (
+                <Animated.View
+                  key={url}
+                  style={[styles.capaHero, { opacity: opacidadesHero[i] }]}
+                >
+                  <Image
+                    source={{ uri: url }}
+                    style={styles.capaHeroImagen}
+                    resizeMode="cover"
+                  />
+                </Animated.View>
               ))}
               <LinearGradient
                 colors={["rgba(15, 23, 42, 0.20)", "rgba(15, 23, 42, 0.75)"]}
@@ -395,6 +404,18 @@ const styles = StyleSheet.create({
   },
   heroFondo: {
     ...StyleSheet.absoluteFillObject,
+  },
+  capaHero: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+  },
+  capaHeroImagen: {
+    width: "100%",
+    height: "100%",
+    marginTop: 0,
   },
   heroGradiente: {
     ...StyleSheet.absoluteFillObject,
