@@ -191,7 +191,8 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
                 style={styles.heroGradiente}
               />
 
-              {/* Barra de marca: ahora vive FUERA de la lista, fija en la pantalla */}              <View style={[styles.heroContenido, styles.heroPanel]}>
+              {/* Barra de marca: ahora vive FUERA de la lista, fija en la pantalla */}
+              <View style={[styles.heroContenido, styles.heroPanel]}>
                 <Text style={styles.heroUbicacion}>
                   📍 Sincelejo · Sucre · Colombia
                 </Text>
