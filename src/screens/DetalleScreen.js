@@ -53,7 +53,6 @@ export default function DetalleScreen({ lugar, onVolver, esAdmin, onEditar, onEl
           <TouchableOpacity style={styles.btnVolver} onPress={onVolver} activeOpacity={0.8}>
             <Text style={styles.btnVolverTexto}>‹ Volver</Text>
           </TouchableOpacity>
-
           {/* Badge de categoria flotando sobre la foto, como el card-badge web */}
           <View style={styles.badgeCategoria}>
             <Text style={styles.badgeTexto}>
@@ -137,15 +136,14 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 44,
     left: 16,
-    backgroundColor: "rgba(255,255,255,0.25)",
-    borderColor: "rgba(255,255,255,0.45)",
-    borderWidth: 1,
+    backgroundColor: colores.blanco,
     borderRadius: radio.pill,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    ...sombras.elevada,
   },
   btnVolverTexto: {
-    color: colores.blanco,
+    color: colores.tinta,
     fontSize: 15,
     fontFamily: fuentes.semibold,
   },
