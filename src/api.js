@@ -107,3 +107,50 @@ export async function crearLugar(lugarData, token) {
     body: JSON.stringify(lugarData),
   });
 }
+
+/**
+ * Editar un lugar existente (PUT) — requiere autenticación
+ */
+export async function actualizarLugar(idLugar, lugarData, token) {
+  return apiRequest(`/lugares/${idLugar}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(lugarData),
+  });
+}
+
+/**
+ * Eliminar un lugar (DELETE) — requiere autenticación
+ */
+export async function eliminarLugar(idLugar, token) {
+  return apiRequest(`/lugares/${idLugar}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+/**
+ * Sube una foto local del teléfono a la API (/api/archivos, multipart igual
+ * que en el admin web) y devuelve la URL que la API asignó al archivo.
+ * NO se manda Content-Type a mano — el uploader agrega el boundary necesario.
+ */
+export async function subirArchivo(uri, token) {
+  const { uploadAsync, FileSystemUploadTypes } = await import("expo-file-system");
+  const respuesta = await uploadAsync(`${API_URL}/archivos`, uri, {
+    httpMethod: "POST",
+    uploadType: FileSystemUploadTypes.MULTIPART,
+    fieldName: "archivo",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (respuesta.status < 200 || respuesta.status >= 300) {
+    throw new Error(`Error subiendo la imagen (${respuesta.status})`);
+  }
+  const resultado = JSON.parse(respuesta.body);
+  return resultado.url;
+}

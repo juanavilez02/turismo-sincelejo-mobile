@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import { SafeAreaView, StyleSheet, StatusBar, ActivityIndicator, View, Text } from "react-native";
+import React, { useState, useEffect } from "react";
+import { SafeAreaView, StyleSheet, StatusBar, ActivityIndicator, View, Text, Alert } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFonts } from "@expo-google-fonts/poppins";
 import {
   Poppins_400Regular,
@@ -11,12 +12,32 @@ import {
 import HomeScreen from "./src/screens/HomeScreen";
 import DetalleScreen from "./src/screens/DetalleScreen";
 import LoginScreen from "./src/screens/LoginScreen";
+import FormularioLugarScreen from "./src/screens/FormularioLugarScreen";
+import { eliminarLugar } from "./src/api";
 import { colores, fuentes } from "./src/theme";
+
+const LLAVE_TOKEN = "token";
 
 export default function App() {
   const [token, setToken] = useState(null);
+  const [sesionCargada, setSesionCargada] = useState(false);
   const [mostrarLogin, setMostrarLogin] = useState(false);
   const [lugarSeleccionado, setLugarSeleccionado] = useState(null);
+  const [modoFormulario, setModoFormulario] = useState(null); // null | {} | {lugar}
+
+  // Al arrancar: recuperar la sesión guardada en el teléfono (si ya entró antes)
+  useEffect(() => {
+    (async () => {
+      try {
+        const guardado = await AsyncStorage.getItem(LLAVE_TOKEN);
+        if (guardado) setToken(guardado);
+      } catch {
+        // sin token guardado: arranca como visitante
+      } finally {
+        setSesionCargada(true);
+      }
+    })();
+  }, []);
 
   // Carga de Poppins (las mismas variantes que usa la web: 400/500/600/700/800)
   const [fuentesCargadas] = useFonts({
@@ -27,11 +48,51 @@ export default function App() {
     Poppins_800ExtraBold,
   });
 
-  const abrirDetalle = (lugar) => {
-    setLugarSeleccionado(lugar);
+  const iniciarSesion = async (t) => {
+    setToken(t);
+    setMostrarLogin(false);
+    try {
+      await AsyncStorage.setItem(LLAVE_TOKEN, t);
+    } catch {
+      // si no se puede guardar, la sesión vive igual mientras la app está abierta
+    }
   };
 
-  if (!fuentesCargadas) {
+  const cerrarSesion = async () => {
+    setToken(null);
+    setModoFormulario(null);
+    setLugarSeleccionado(null);
+    try {
+      await AsyncStorage.removeItem(LLAVE_TOKEN);
+    } catch {
+      // nada grave si falla el borrado local
+    }
+  };
+
+  const confirmarEliminar = (lugar) => {
+    Alert.alert(
+      "Eliminar lugar",
+      `¿Seguro que quieres eliminar "${lugar.nombre}"? Esta acción no tiene vuelta atrás.`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await eliminarLugar(lugar.idLugar, token);
+              setLugarSeleccionado(null);
+              Alert.alert("Listo", "Lugar eliminado exitosamente.");
+            } catch (err) {
+              Alert.alert("Error", err.message || "No se pudo eliminar el lugar.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  if (!fuentesCargadas || !sesionCargada) {
     return (
       <SafeAreaView style={[styles.contenedor, styles.centro]}>
         <StatusBar barStyle="light-content" backgroundColor={colores.primarioOscuro} />
@@ -44,20 +105,31 @@ export default function App() {
   return (
     <SafeAreaView style={styles.contenedor}>
       <StatusBar barStyle="light-content" backgroundColor={colores.primarioOscuro} />
-      {mostrarLogin ? (
-        <LoginScreen onLogin={(t) => {
-          setToken(t);
-          setMostrarLogin(false);
-        }} />
+
+      {modoFormulario ? (
+        <FormularioLugarScreen
+          lugar={modoFormulario?.lugar}
+          token={token}
+          onGuardar={() => setModoFormulario(null)}
+          onCancelar={() => setModoFormulario(null)}
+        />
+      ) : mostrarLogin ? (
+        <LoginScreen onLogin={iniciarSesion} onVolver={() => setMostrarLogin(false)} />
       ) : lugarSeleccionado ? (
         <DetalleScreen
           lugar={lugarSeleccionado}
+          esAdmin={Boolean(token)}
           onVolver={() => setLugarSeleccionado(null)}
+          onEditar={() => setModoFormulario({ lugar: lugarSeleccionado })}
+          onEliminar={() => confirmarEliminar(lugarSeleccionado)}
         />
       ) : (
         <HomeScreen
-          onVerDetalle={abrirDetalle}
+          esAdmin={Boolean(token)}
+          onVerDetalle={setLugarSeleccionado}
           onAbrirLogin={() => setMostrarLogin(true)}
+          onNuevoLugar={() => setModoFormulario({})}
+          onCerrarSesion={cerrarSesion}
         />
       )}
     </SafeAreaView>

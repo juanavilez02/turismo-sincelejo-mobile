@@ -27,7 +27,7 @@ const FOTOS_HERO = [
   `${SITE_URL}/img/guacari.jpg`,
 ];
 
-export default function HomeScreen({ onVerDetalle, onAbrirLogin }) {
+export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuevoLugar, onCerrarSesion }) {
   const [lugares, setLugares] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -164,11 +164,13 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin }) {
                   Turismo<Text style={styles.marcaFuerte}>Sincelejo</Text>
                 </Text>
                 <TouchableOpacity
-                  style={styles.botonLogin}
-                  onPress={onAbrirLogin}
+                  style={[styles.botonLogin, esAdmin && styles.botonLoginAdmin]}
+                  onPress={esAdmin ? onCerrarSesion : onAbrirLogin}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.botonLoginTexto}>⚙ Acceso</Text>
+                  <Text style={styles.botonLoginTexto}>
+                    {esAdmin ? "🚪 Salir" : "⚙ Acceso"}
+                  </Text>
                 </TouchableOpacity>
               </View>
 
@@ -297,6 +299,17 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin }) {
         <Text style={styles.errorFlotante}>{error}</Text>
       )}
 
+      {/* ============ FAB "Nuevo lugar" (solo modo admin, como el panel web) ============ */}
+      {esAdmin && !soloFavoritos && (
+        <TouchableOpacity
+          style={[styles.fab, sombras.elevada]}
+          onPress={onNuevoLugar}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.fabTexto}>➕ Nuevo lugar</Text>
+        </TouchableOpacity>
+      )}
+
       {/* Error completo (sin datos) */}
       {error && lugares.length === 0 && !cargando && (
         <View style={[styles.centroAbsoluto]}>
@@ -403,6 +416,24 @@ const styles = StyleSheet.create({
   botonLoginTexto: {
     color: colores.blanco,
     fontSize: 13,
+    fontFamily: fuentes.semibold,
+  },
+  botonLoginAdmin: {
+    backgroundColor: colores.acento,
+    borderColor: "rgba(255,255,255,0.7)",
+  },
+  fab: {
+    position: "absolute",
+    right: 16,
+    bottom: 20,
+    backgroundColor: colores.acento,
+    borderRadius: radio.pill,
+    paddingVertical: 13,
+    paddingHorizontal: 20,
+  },
+  fabTexto: {
+    color: colores.blanco,
+    fontSize: 14,
     fontFamily: fuentes.semibold,
   },
   heroContenido: {

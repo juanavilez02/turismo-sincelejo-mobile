@@ -6,123 +6,216 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
-  SafeAreaView,
-  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { login } from "../api";
+import { colores, radio, sombras, fuentes } from "../theme";
 
-export default function LoginScreen({ onLogin }) {
+export default function LoginScreen({ onLogin, onVolver }) {
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
   const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState(null);
 
-  const manejarLogin = async () => {
-    if (!usuario || !password) {
-      Alert.alert("Campos requeridos", "Ingresa usuario y contraseña");
+  const entrar = async () => {
+    if (!usuario.trim() || !password) {
+      setError("Escribe tu usuario y contraseña.");
       return;
     }
-
-    setCargando(true);
     try {
-      const token = await login(usuario, password);
-      // Aquí normalmente guardarías el token en SecureStore
+      setCargando(true);
+      setError(null);
+      const token = await login(usuario.trim(), password);
       onLogin(token);
     } catch (err) {
-      Alert.alert("Error", err.message || "No se pudo iniciar sesión");
+      setError(err.message === "Error 401"
+        ? "Usuario o contraseña incorrectos."
+        : err.message || "No se pudo iniciar sesión.");
     } finally {
       setCargando(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.contenedor}>
-      <View style={styles.card}>
-        <Text style={styles.titulo}>Acceso Administrativo</Text>
-        <Text style={styles.subtitulo}>Ingresa tus credenciales</Text>
+    <LinearGradient
+      colors={[colores.primarioOscuro, colores.primario, "#14B8A6"]}
+      style={styles.contenedor}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
+      >
+        <ScrollView contentContainerStyle={styles.scroll}>
+          {/* Marca, como el navbar de la web */}
+          <Text style={styles.marca}>
+            Turismo<Text style={styles.marcaFuerte}>Sincelejo</Text>
+          </Text>
+          <Text style={styles.subtitulo}>Acceso administrativo</Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Usuario"
-          value={usuario}
-          onChangeText={setUsuario}
-          autoCapitalize="none"
-        />
+          {/* Tarjeta del formulario, como las superficies de la web */}
+          <View style={[styles.tarjeta, sombras.elevada]}>
+            <Text style={styles.emoji}>🔐</Text>
+            <Text style={styles.titulo}>Panel de Administración</Text>
+            <Text style={styles.parrafo}>
+              Ingresa con tu cuenta para gestionar los lugares de la Sabana.
+            </Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Contraseña"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+            <Text style={styles.etiqueta}>Usuario</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ej: admin"
+              placeholderTextColor={colores.tintaSuave}
+              autoCapitalize="none"
+              value={usuario}
+              onChangeText={setUsuario}
+            />
 
-        <TouchableOpacity
-          style={styles.boton}
-          onPress={manejarLogin}
-          disabled={cargando}
-        >
-          {cargando ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text style={styles.botonTexto}>Ingresar</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+            <Text style={styles.etiqueta}>Contraseña</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="••••••••"
+              placeholderTextColor={colores.tintaSuave}
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+            />
+
+            {error && <Text style={styles.error}>⚠️ {error}</Text>}
+
+            <TouchableOpacity
+              style={[styles.botonEntrar, cargando && { opacity: 0.7 }]}
+              onPress={entrar}
+              disabled={cargando}
+              activeOpacity={0.85}
+            >
+              {cargando ? (
+                <ActivityIndicator color={colores.blanco} />
+              ) : (
+                <Text style={styles.botonEntrarTexto}>Entrar</Text>
+              )}
+            </TouchableOpacity>
+
+            {onVolver && (
+              <TouchableOpacity onPress={onVolver} activeOpacity={0.7}>
+                <Text style={styles.volver}>‹ Volver al inicio</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <Text style={styles.pie}>
+            Proyecto académico · Made with 💛 por juanavilez02
+          </Text>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   contenedor: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+  },
+  scroll: {
+    flexGrow: 1,
     justifyContent: "center",
     padding: 24,
+    paddingTop: 60,
+    paddingBottom: 40,
   },
-  card: {
-    backgroundColor: "#fff",
-    padding: 24,
-    borderRadius: 20,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    alignSelf: "center",
-    width: "90%",
-  },
-  titulo: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#1e293b",
+  marca: {
     textAlign: "center",
-    marginBottom: 8,
+    color: colores.blanco,
+    fontSize: 26,
+    fontFamily: fuentes.bold,
+    marginBottom: 6,
+  },
+  marcaFuerte: {
+    color: colores.acento,
   },
   subtitulo: {
-    fontSize: 14,
-    color: "#64748b",
     textAlign: "center",
-    marginBottom: 24,
+    color: "rgba(255,255,255,0.85)",
+    fontSize: 13,
+    fontFamily: fuentes.medio,
+    marginBottom: 26,
+  },
+  tarjeta: {
+    backgroundColor: colores.superficie,
+    borderRadius: radio.normal + 6,
+    padding: 24,
+  },
+  emoji: {
+    textAlign: "center",
+    fontSize: 40,
+    marginBottom: 8,
+  },
+  titulo: {
+    textAlign: "center",
+    fontSize: 18,
+    fontFamily: fuentes.semibold,
+    color: colores.tinta,
+  },
+  parrafo: {
+    textAlign: "center",
+    color: colores.tintaSuave,
+    fontSize: 13,
+    lineHeight: 19,
+    fontFamily: fuentes.regular,
+    marginTop: 6,
+    marginBottom: 22,
+  },
+  etiqueta: {
+    fontSize: 12,
+    fontFamily: fuentes.semibold,
+    color: colores.tintaMedia,
+    marginBottom: 6,
   },
   input: {
-    height: 50,
-    backgroundColor: "#f1f5f9",
+    backgroundColor: colores.fondo,
+    borderWidth: 1,
+    borderColor: colores.borde,
     borderRadius: 12,
-    paddingHorizontal: 16,
-    color: "#1e293b",
-    marginBottom: 16,
-    fontSize: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    color: colores.tinta,
+    fontFamily: fuentes.regular,
+    fontSize: 14,
+    marginBottom: 14,
   },
-  boton: {
-    backgroundColor: "#0D9488",
-    height: 50,
-    borderRadius: 12,
-    justifyContent: "center",
+  error: {
+    color: colores.peligro,
+    fontSize: 13,
+    fontFamily: fuentes.medio,
+    marginBottom: 12,
+  },
+  botonEntrar: {
+    backgroundColor: colores.primario,
+    borderRadius: radio.pill,
+    paddingVertical: 14,
     alignItems: "center",
+    marginTop: 4,
+    ...sombras.reposo,
   },
-  botonTexto: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
+  botonEntrarTexto: {
+    color: colores.blanco,
+    fontSize: 15,
+    fontFamily: fuentes.semibold,
+  },
+  volver: {
+    textAlign: "center",
+    color: colores.primario,
+    fontFamily: fuentes.semibold,
+    fontSize: 13,
+    marginTop: 18,
+  },
+  pie: {
+    textAlign: "center",
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 12,
+    fontFamily: fuentes.regular,
+    marginTop: 22,
   },
 });

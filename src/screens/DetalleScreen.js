@@ -21,7 +21,7 @@ const EMOJIS_CATEGORIAS = {
   "Comercio y Entretenimiento": "🛍️",
 };
 
-export default function DetalleScreen({ lugar, onVolver }) {
+export default function DetalleScreen({ lugar, onVolver, esAdmin, onEditar, onEliminar }) {
   const urlImagen = obtenerUrlImagen(lugar.imagen);
   const emoji = EMOJIS_CATEGORIAS[lugar.categoria] ?? "📍";
 
@@ -82,6 +82,18 @@ export default function DetalleScreen({ lugar, onVolver }) {
           >
             <Text style={styles.botonMapaTexto}>🗺️ Cómo llegar</Text>
           </TouchableOpacity>
+
+          {/* Acciones de administración (solo si hay sesión, como el panel web) */}
+          {esAdmin && (
+            <View style={styles.filaAdmin}>
+              <TouchableOpacity style={[styles.botonEditar, sombras.reposo]} onPress={onEditar} activeOpacity={0.85}>
+                <Text style={styles.botonEditarTexto}>✏️ Editar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.botonEliminar, sombras.reposo]} onPress={onEliminar} activeOpacity={0.85}>
+                <Text style={styles.botonEliminarTexto}>🗑 Eliminar</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           <Text style={styles.pie}>
             Turismo<Text style={styles.pieDorado}>Sincelejo</Text> · Capital de la Sabana
@@ -197,6 +209,37 @@ const styles = StyleSheet.create({
   botonMapaTexto: {
     color: colores.blanco,
     fontSize: 15,
+    fontFamily: fuentes.semibold,
+  },
+  filaAdmin: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 12,
+  },
+  botonEditar: {
+    flex: 1,
+    backgroundColor: colores.acento,
+    borderRadius: radio.pill,
+    paddingVertical: 13,
+    alignItems: "center",
+  },
+  botonEditarTexto: {
+    color: colores.blanco,
+    fontSize: 14,
+    fontFamily: fuentes.semibold,
+  },
+  botonEliminar: {
+    flex: 1,
+    backgroundColor: colores.superficie,
+    borderWidth: 1.5,
+    borderColor: colores.peligro,
+    borderRadius: radio.pill,
+    paddingVertical: 13,
+    alignItems: "center",
+  },
+  botonEliminarTexto: {
+    color: colores.peligro,
+    fontSize: 14,
     fontFamily: fuentes.semibold,
   },
   pie: {
