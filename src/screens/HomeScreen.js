@@ -183,11 +183,11 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
               ))}
               <LinearGradient
                 colors={[
-                  "rgba(15, 23, 42, 0.42)",
-                  "rgba(15, 23, 42, 0.58)",
-                  "rgba(15, 23, 42, 0.90)",
+                  "rgba(15, 23, 42, 0.62)",
+                  "rgba(15, 23, 42, 0.78)",
+                  "rgba(15, 23, 42, 0.94)",
                 ]}
-                locations={[0, 0.45, 1]}
+                locations={[0, 0.35, 1]}
                 style={styles.heroGradiente}
               />
 
@@ -486,9 +486,6 @@ const styles = StyleSheet.create({
     fontFamily: fuentes.semibold,
     letterSpacing: 0.5,
     marginBottom: 8,
-    textShadowColor: "rgba(15,23,42,0.95)",
-    textShadowRadius: 5,
-    textShadowOffset: { width: 0, height: 1 },
   },
   heroTitulo: {
     color: colores.blanco,
@@ -496,22 +493,16 @@ const styles = StyleSheet.create({
     lineHeight: 36,
     fontFamily: fuentes.extrabold,
     marginBottom: 8,
-    textShadowColor: "rgba(15,23,42,0.95)",
-    textShadowRadius: 7,
-    textShadowOffset: { width: 0, height: 2 },
   },
   heroDestacado: {
     color: colores.acento,
   },
   heroParrafo: {
-    color: "#E2E8F0",
+    color: "#CBD5E1",
     fontSize: 13,
     lineHeight: 19,
     fontFamily: fuentes.regular,
     marginBottom: 16,
-    textShadowColor: "rgba(15,23,42,0.95)",
-    textShadowRadius: 5,
-    textShadowOffset: { width: 0, height: 1 },
   },
   heroBuscador: {
     flexDirection: "row",
