@@ -12,6 +12,7 @@ import {
   StatusBar,
   Animated,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import LugarCard from "../components/LugarCard";
 import { obtenerLugares, obtenerCategorias, obtenerUrlImagen, SITE_URL } from "../api";
@@ -30,6 +31,8 @@ const FOTOS_HERO = [
 
 export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuevoLugar, onCerrarSesion }) {
   const refLista = useRef(null);
+  // Respeto la "zona segura" del teléfono: reloj, wifi y batería arriba
+  const insets = useSafeAreaInsets();
   const [lugares, setLugares] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -192,7 +195,7 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
               />
 
               {/* Barra de marca: ahora vive FUERA de la lista, fija en la pantalla */}
-              <View style={[styles.heroContenido, styles.heroPanel]}>
+              <View style={[styles.heroContenido, styles.heroPanel, sombras.elevada]}>
                 <Text style={styles.heroUbicacion}>
                   📍 Sincelejo · Sucre · Colombia
                 </Text>
@@ -315,7 +318,13 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
       />
 
       {/* ============ BARRA SUPERIOR FIJA (navbar glass móvil, como la web) ============ */}
-      <View style={[styles.barraMarca, sombras.reposo]}>
+      <View
+        style={[
+          styles.barraMarca,
+          { top: insets.top + 8 },
+          sombras.elevada,
+        ]}
+      >
         <Text style={styles.marcaTexto}>
           Turismo<Text style={styles.marcaFuerte}>Sincelejo</Text>
         </Text>
@@ -428,18 +437,18 @@ const styles = StyleSheet.create({
   },
   barraMarca: {
     position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
+    left: 12,
+    right: 12,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 12,
+    borderRadius: 20,
     backgroundColor: "rgba(15, 23, 42, 0.62)",
-    borderBottomWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.35)",
     zIndex: 10,
   },
   marcaTexto: {
