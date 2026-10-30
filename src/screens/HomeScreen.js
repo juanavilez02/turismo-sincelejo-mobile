@@ -191,23 +191,7 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
                 style={styles.heroGradiente}
               />
 
-              {/* Marca arriba (equivalente al navbar glass de la web) */}
-              <View style={styles.barraMarca}>
-                <Text style={styles.marcaTexto}>
-                  Turismo<Text style={styles.marcaFuerte}>Sincelejo</Text>
-                </Text>
-                <TouchableOpacity
-                  style={[styles.botonLogin, esAdmin && styles.botonLoginAdmin]}
-                  onPress={esAdmin ? onCerrarSesion : onAbrirLogin}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.botonLoginTexto}>
-                    {esAdmin ? "🚪 Salir" : "⚙ Acceso"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={[styles.heroContenido, styles.heroPanel]}>
+              {/* Barra de marca: ahora vive FUERA de la lista, fija en la pantalla */}              <View style={[styles.heroContenido, styles.heroPanel]}>
                 <Text style={styles.heroUbicacion}>
                   📍 Sincelejo · Sucre · Colombia
                 </Text>
@@ -329,6 +313,22 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
         }
       />
 
+      {/* ============ BARRA SUPERIOR FIJA (navbar glass móvil, como la web) ============ */}
+      <View style={[styles.barraMarca, sombras.reposo]}>
+        <Text style={styles.marcaTexto}>
+          Turismo<Text style={styles.marcaFuerte}>Sincelejo</Text>
+        </Text>
+        <TouchableOpacity
+          style={[styles.botonLogin, esAdmin && styles.botonLoginAdmin]}
+          onPress={esAdmin ? onCerrarSesion : onAbrirLogin}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.botonLoginTexto}>
+            {esAdmin ? "🚪 Salir" : "⚙ Acceso"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       {error && lugares.length > 0 && (
         <Text style={styles.errorFlotante}>{error}</Text>
       )}
@@ -434,8 +434,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop: 52,
+    paddingTop: 12,
     paddingBottom: 12,
+    backgroundColor: "rgba(15, 23, 42, 0.62)",
+    borderBottomWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
+    zIndex: 10,
   },
   marcaTexto: {
     color: colores.blanco,
