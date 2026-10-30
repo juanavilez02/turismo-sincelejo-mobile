@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { SafeAreaView, StyleSheet, StatusBar, ActivityIndicator, View, Text, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFonts } from "@expo-google-fonts/poppins";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import {
   Poppins_400Regular,
   Poppins_500Medium,
@@ -103,10 +104,11 @@ export default function App() {
   }
 
   return (
-    <SafeAreaView style={styles.contenedor}>
-      <StatusBar barStyle="light-content" backgroundColor={colores.primarioOscuro} />
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.contenedor}>
+        <StatusBar barStyle="light-content" backgroundColor={colores.primarioOscuro} />
 
-      {modoFormulario ? (
+        {modoFormulario ? (
         <FormularioLugarScreen
           lugar={modoFormulario?.lugar}
           token={token}
@@ -132,7 +134,8 @@ export default function App() {
           onCerrarSesion={cerrarSesion}
         />
       )}
-    </SafeAreaView>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
