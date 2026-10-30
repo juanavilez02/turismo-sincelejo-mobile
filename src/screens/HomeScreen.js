@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -28,6 +28,7 @@ const FOTOS_HERO = [
 ];
 
 export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuevoLugar, onCerrarSesion }) {
+  const refLista = useRef(null);
   const [lugares, setLugares] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -137,6 +138,7 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
       <StatusBar barStyle="light-content" backgroundColor={colores.primarioOscuro} />
 
       <FlatList
+        ref={refLista}
         ListHeaderComponent={
           <View>
             {/* ============ HERO (como la web: foto + gradiente + buscador) ============ */}
@@ -196,6 +198,7 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
                     placeholderTextColor={colores.tintaSuave}
                     value={buscar}
                     onChangeText={setBuscar}
+                    onFocus={() => refLista.current?.scrollToOffset({ animated: true, offset: 140 })}
                   />
                 </View>
               </View>

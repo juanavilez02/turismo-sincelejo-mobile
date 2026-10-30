@@ -117,7 +117,7 @@ export default function FormularioLugarScreen({ lugar, token, onGuardar, onCance
   return (
     <View style={styles.contenedor}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
