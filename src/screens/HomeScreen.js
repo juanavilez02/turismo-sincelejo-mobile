@@ -182,7 +182,12 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
                 </Animated.View>
               ))}
               <LinearGradient
-                colors={["rgba(15, 23, 42, 0.20)", "rgba(15, 23, 42, 0.75)"]}
+                colors={[
+                  "rgba(15, 23, 42, 0.42)",
+                  "rgba(15, 23, 42, 0.58)",
+                  "rgba(15, 23, 42, 0.90)",
+                ]}
+                locations={[0, 0.45, 1]}
                 style={styles.heroGradiente}
               />
 
@@ -481,8 +486,9 @@ const styles = StyleSheet.create({
     fontFamily: fuentes.semibold,
     letterSpacing: 0.5,
     marginBottom: 8,
-    textShadowColor: "rgba(15,23,42,0.8)",
-    textShadowRadius: 4,
+    textShadowColor: "rgba(15,23,42,0.95)",
+    textShadowRadius: 5,
+    textShadowOffset: { width: 0, height: 1 },
   },
   heroTitulo: {
     color: colores.blanco,
@@ -490,8 +496,9 @@ const styles = StyleSheet.create({
     lineHeight: 36,
     fontFamily: fuentes.extrabold,
     marginBottom: 8,
-    textShadowColor: "rgba(15,23,42,0.6)",
-    textShadowRadius: 8,
+    textShadowColor: "rgba(15,23,42,0.95)",
+    textShadowRadius: 7,
+    textShadowOffset: { width: 0, height: 2 },
   },
   heroDestacado: {
     color: colores.acento,
@@ -502,6 +509,9 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     fontFamily: fuentes.regular,
     marginBottom: 16,
+    textShadowColor: "rgba(15,23,42,0.95)",
+    textShadowRadius: 5,
+    textShadowOffset: { width: 0, height: 1 },
   },
   heroBuscador: {
     flexDirection: "row",
