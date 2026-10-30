@@ -1,13 +1,15 @@
 import React, { useState } from "react";
-import { SafeAreaView, StyleSheet, StatusBar, ActivityIndicator, View, Text, Alert } from "react-native";
+import { SafeAreaView, StyleSheet, StatusBar, ActivityIndicator, View, Text } from "react-native";
 import { useFonts } from "@expo-google-fonts/poppins";
 import HomeScreen from "./src/screens/HomeScreen";
+import DetalleScreen from "./src/screens/DetalleScreen";
 import LoginScreen from "./src/screens/LoginScreen";
 import { colores, fuentes } from "./src/theme";
 
 export default function App() {
   const [token, setToken] = useState(null);
   const [mostrarLogin, setMostrarLogin] = useState(false);
+  const [lugarSeleccionado, setLugarSeleccionado] = useState(null);
 
   // Carga de Poppins (las mismas variantes que usa la web: 400/500/600/700/800)
   const [fuentesCargadas] = useFonts({
@@ -19,13 +21,7 @@ export default function App() {
   });
 
   const abrirDetalle = (lugar) => {
-    // Pantalla de detalle: siguiente sesión del proyecto
-    Alert.alert(
-      lugar.nombre,
-      lugar.descripcion,
-      [{ text: "Cerrar" }],
-      { cancelable: true }
-    );
+    setLugarSeleccionado(lugar);
   };
 
   if (!fuentesCargadas) {
@@ -46,6 +42,11 @@ export default function App() {
           setToken(t);
           setMostrarLogin(false);
         }} />
+      ) : lugarSeleccionado ? (
+        <DetalleScreen
+          lugar={lugarSeleccionado}
+          onVolver={() => setLugarSeleccionado(null)}
+        />
       ) : (
         <HomeScreen
           onVerDetalle={abrirDetalle}
