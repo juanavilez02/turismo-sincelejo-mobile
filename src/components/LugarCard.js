@@ -3,7 +3,7 @@ import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { obtenerUrlImagen } from "../api";
 import { colores, sombras, fuentes } from "../theme";
 
-export default function LugarCard({ lugar, onPress }) {
+export default function LugarCard({ lugar, onPress, favorito, onAlternarFavorito }) {
   const urlImagen = obtenerUrlImagen(lugar.imagen);
 
   return (
@@ -23,6 +23,18 @@ export default function LugarCard({ lugar, onPress }) {
           <Text style={styles.imagenVaciaTexto}>📷</Text>
         </View>
       )}
+
+      {/* Corazón de favorito, como el .btn-favorito de la web */}
+      <TouchableOpacity
+        style={styles.botonFavorito}
+        onPress={onAlternarFavorito}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.botonFavoritoTexto}>
+          {favorito ? "❤️" : "🤍"}
+        </Text>
+      </TouchableOpacity>
+
       <View style={styles.contenido}>
         <Text style={styles.titulo}>{lugar.nombre}</Text>
         <Text style={styles.categoria}>{lugar.categoria}</Text>
@@ -51,6 +63,21 @@ const styles = StyleSheet.create({
   },
   imagenVaciaTexto: {
     fontSize: 32,
+  },
+  botonFavorito: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    backgroundColor: "rgba(255,255,255,0.92)",
+    borderRadius: radio.pill,
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    ...sombras.reposo,
+  },
+  botonFavoritoTexto: {
+    fontSize: 20,
   },
   contenido: {
     padding: 12,

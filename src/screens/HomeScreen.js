@@ -14,6 +14,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import LugarCard from "../components/LugarCard";
 import { obtenerLugares, obtenerCategorias, obtenerUrlImagen, SITE_URL } from "../api";
+import { obtenerFavoritos, alternarFavorito } from "../favoritos";
 import { colores, radio, sombras, fuentes } from "../theme";
 
 // Fotos del hero: las mismas del crossfade del sitio web (Frontend/app.js)
@@ -37,6 +38,8 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin }) {
   const [cargandoMas, setCargandoMas] = useState(false);
   const [error, setError] = useState(null);
   const [imagenHeroIndex, setImagenHeroIndex] = useState(0);
+  const [favoritos, setFavoritos] = useState(new Set());
+  const [soloFavoritos, setSoloFavoritos] = useState(false);
 
   // ---------- Carga de datos ----------
   const cargarLugares = useCallback(async (paginaDestino = 1, filtros) => {
@@ -74,10 +77,22 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin }) {
     }
   }, []);
 
+  // Carga los favoritos guardados en el teléfono (equivalente a localStorage de la web)
+  const cargarFavoritos = useCallback(async () => {
+    setFavoritos(await obtenerFavoritos());
+  }, []);
+
+  // Igual que alternarFavorito() de la web: invierte y guarda
+  const alTocarFavorito = useCallback(async (idLugar) => {
+    const nuevos = await alternarFavorito(idLugar);
+    setFavoritos(nuevos);
+  }, []);
+
   // Primera carga
   useEffect(() => {
     cargarLugares(1, {});
     cargarCategorias();
+    cargarFavoritos();
   }, []);
 
   // Búsqueda en vivo (con pequeño retardo, como en la web)
@@ -102,6 +117,11 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin }) {
   }, []);
 
   const hayFiltros = buscar.trim().length > 0 || idCategoria > 0;
+
+  // Vista de favoritos: filtro local sobre lo cargado, como aplicarVistaFavoritos() en la web
+  const lugaresVisibles = soloFavoritos
+    ? lugares.filter((l) => favoritos.has(l.idLugar))
+    : lugares;
 
   if (cargando && lugares.length === 0) {
     return (
@@ -199,27 +219,39 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin }) {
                     onPress={() => setIdCategoria(cat.idCategoria)}
                   />
                 ))}
+                <Chip
+                  etiqueta="❤️ Mis favoritos"
+                  activo={soloFavoritos}
+                  onPress={() => setSoloFavoritos(!soloFavoritos)}
+                />
               </ScrollView>
             </View>
           </View>
         }
-        data={lugares}
+        data={lugaresVisibles}
         keyExtractor={(item) => item.idLugar.toString()}
         renderItem={({ item }) => (
-          <LugarCard lugar={item} onPress={() => onVerDetalle(item)} />
+          <LugarCard
+            lugar={item}
+            favorito={favoritos.has(item.idLugar)}
+            onAlternarFavorito={() => alTocarFavorito(item.idLugar)}
+            onPress={() => onVerDetalle(item)}
+          />
         )}
         numColumns={2}
         columnWrapperStyle={styles.filaTarjetas}
         contentContainerStyle={styles.lista}
         ListEmptyComponent={
           <Text style={styles.sinResultados}>
-            No encontramos lugares con esos filtros 🧭
+            {soloFavoritos
+              ? "Aún no guardas favoritos. Toca el 🤍 en cualquier lugar. ❤️"
+              : "No encontramos lugares con esos filtros 🧭"}
           </Text>
         }
         ListFooterComponent={
           <View>
-            {/* ============ PAGINACIÓN ============ */}
-            {pagina < totalPaginas && (
+            {/* ============ PAGINACIÓN (fuera de la vista de favoritos) ============ */}
+            {!soloFavoritos && pagina < totalPaginas && (
               <TouchableOpacity
                 style={styles.botonVerMas}
                 disabled={cargandoMas}
