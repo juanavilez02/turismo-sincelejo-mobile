@@ -97,6 +97,9 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
     cargarLugares(1, {});
     cargarCategorias();
     cargarFavoritos();
+    // Precarga las 6 fotos del hero al abrir: sin ellas, el fundido
+    // muestra el fondo negro mientras descarga cada imagen por el túnel
+    Promise.all(FOTOS_HERO.map((url) => Image.prefetch(url))).catch(() => {});
   }, []);
 
   // Búsqueda en vivo (con pequeño retardo, como en la web)
@@ -158,6 +161,9 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
           <View>
             {/* ============ HERO (como la web: foto + gradiente + buscador) ============ */}
             <View style={styles.hero}>
+              {/* Foto base permanente: garantiza que NUNCA se asome el fondo
+                  negro entre fundidos, mientras las capas animadas trabajan */}
+              <Image source={{ uri: FOTOS_HERO[0] }} style={styles.heroFondo} resizeMode="cover" />
               {FOTOS_HERO.map((url, i) => (
                 <Animated.Image
                   key={url}
