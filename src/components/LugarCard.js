@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { obtenerUrlImagen } from "../api";
-import { colores, sombras, fuentes } from "../theme";
+import { colores, radio, sombras, fuentes } from "../theme";
 
 export default function LugarCard({ lugar, onPress, favorito, onAlternarFavorito }) {
   const urlImagen = obtenerUrlImagen(lugar.imagen);
