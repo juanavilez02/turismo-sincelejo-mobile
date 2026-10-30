@@ -207,7 +207,7 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
                 </TouchableOpacity>
               </View>
 
-              <View style={styles.heroContenido}>
+              <View style={[styles.heroContenido, styles.heroPanel]}>
                 <Text style={styles.heroUbicacion}>
                   📍 Sincelejo · Sucre · Colombia
                 </Text>
@@ -479,6 +479,14 @@ const styles = StyleSheet.create({
   heroContenido: {
     paddingHorizontal: 20,
     paddingBottom: 22,
+  },
+  heroPanel: {
+    backgroundColor: "rgba(15, 23, 42, 0.50)",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    padding: 14,
+    paddingBottom: 14,
   },
   heroUbicacion: {
     color: "#FBBF24",
