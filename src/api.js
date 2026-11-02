@@ -43,17 +43,32 @@ export async function apiRequest(endpoint, options = {}) {
 
   try {
     const response = await fetch(url, defaultOptions);
-    
+
+    // Leemos siempre como texto: hay endpoints (p. ej. DELETE) que responden
+    // 204 sin cuerpo. Hacer response.json() directo reventaba con
+    // "Unexpected end of JSON input".
+    const texto = await response.text();
+    const data = texto ? parsearJsonSeguro(texto) : null;
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.mensaje || `Error ${response.status}`);
+      throw new Error((data && data.mensaje) || `Error ${response.status}`);
     }
 
-    const data = await response.json();
     return data;
   } catch (error) {
-    console.error(`[API Error] ${endpoint}:`, error.message);
+    if (__DEV__) {
+      console.error(`[API Error] ${endpoint}:`, error.message);
+    }
     throw error;
+  }
+}
+
+/** Intenta parsear JSON; si el cuerpo no es JSON válido, devuelve null. */
+function parsearJsonSeguro(texto) {
+  try {
+    return JSON.parse(texto);
+  } catch {
+    return null;
   }
 }
 
@@ -136,21 +151,46 @@ export async function eliminarLugar(idLugar, token) {
 /**
  * Sube una foto local del teléfono a la API (/api/archivos, multipart igual
  * que en el admin web) y devuelve la URL que la API asignó al archivo.
- * NO se manda Content-Type a mano — el uploader agrega el boundary necesario.
+ *
+ * Se usa fetch + FormData (API estándar de React Native) en lugar de
+ * expo-file-system: en la versión 58 de expo-file-system, uploadAsync del
+ * entry principal está deprecado y lanza error en runtime, por lo que la
+ * subida fallaba siempre. Con FormData NO se manda Content-Type a mano —
+ * fetch agrega el boundary del multipart automáticamente.
  */
 export async function subirArchivo(uri, token) {
-  const { uploadAsync, FileSystemUploadTypes } = await import("expo-file-system");
-  const respuesta = await uploadAsync(`${API_URL}/archivos`, uri, {
-    httpMethod: "POST",
-    uploadType: FileSystemUploadTypes.MULTIPART,
-    fieldName: "archivo",
+  const nombre = uri.split("/").pop() || `foto-${Date.now()}.jpg`;
+  const extension = (nombre.split(".").pop() || "jpg").toLowerCase();
+  const tipo =
+    extension === "png"
+      ? "image/png"
+      : extension === "webp"
+        ? "image/webp"
+        : extension === "gif"
+          ? "image/gif"
+          : "image/jpeg";
+
+  const formData = new FormData();
+  formData.append("archivo", { uri, name: nombre, type: tipo });
+
+  const respuesta = await fetch(`${API_URL}/archivos`, {
+    method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
     },
+    body: formData,
   });
-  if (respuesta.status < 200 || respuesta.status >= 300) {
-    throw new Error(`Error subiendo la imagen (${respuesta.status})`);
+
+  const texto = await respuesta.text();
+  const resultado = texto ? parsearJsonSeguro(texto) : null;
+
+  if (!respuesta.ok) {
+    throw new Error(
+      (resultado && resultado.mensaje) || `Error subiendo la imagen (${respuesta.status})`
+    );
   }
-  const resultado = JSON.parse(respuesta.body);
+  if (!resultado || !resultado.url) {
+    throw new Error("La API no devolvió la URL de la imagen subida.");
+  }
   return resultado.url;
 }
