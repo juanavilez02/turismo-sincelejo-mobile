@@ -10,6 +10,7 @@ import {
   Linking,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { obtenerUrlImagen } from "../api";
 import { colores, radio, sombras, fuentes } from "../theme";
 
@@ -22,6 +23,7 @@ const EMOJIS_CATEGORIAS = {
 };
 
 export default function DetalleScreen({ lugar, onVolver, esAdmin, onEditar, onEliminar }) {
+  const insets = useSafeAreaInsets();
   const urlImagen = obtenerUrlImagen(lugar.imagen);
   const emoji = EMOJIS_CATEGORIAS[lugar.categoria] ?? "📍";
 
@@ -50,7 +52,11 @@ export default function DetalleScreen({ lugar, onVolver, esAdmin, onEditar, onEl
             style={styles.heroGradiente}
           />
 
-          <TouchableOpacity style={styles.btnVolver} onPress={onVolver} activeOpacity={0.8}>
+          <TouchableOpacity
+            style={[styles.btnVolver, { top: insets.top + 12 }]}
+            onPress={onVolver}
+            activeOpacity={0.8}
+          >
             <Text style={styles.btnVolverTexto}>‹ Volver</Text>
           </TouchableOpacity>
           {/* Badge de categoria flotando sobre la foto, como el card-badge web */}
@@ -134,7 +140,6 @@ const styles = StyleSheet.create({
   },
   btnVolver: {
     position: "absolute",
-    top: 44,
     left: 16,
     backgroundColor: colores.blanco,
     borderRadius: radio.pill,

@@ -13,10 +13,12 @@ import {
   Alert,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { obtenerCategorias, crearLugar, actualizarLugar, obtenerUrlImagen, subirArchivo } from "../api";
 import { colores, radio, sombras, fuentes } from "../theme";
 
 export default function FormularioLugarScreen({ lugar, token, onGuardar, onCancelar }) {
+  const insets = useSafeAreaInsets();
   // modo edición si nos pasan un lugar
   const editando = Boolean(lugar);
 
@@ -120,7 +122,11 @@ export default function FormularioLugarScreen({ lugar, token, onGuardar, onCance
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 12 }]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* Encabezado como el sidebar del admin web */}
           <Text style={styles.titulo}>
             {editando ? "✏️ Editar lugar" : "➕ Nuevo lugar"}
@@ -248,7 +254,6 @@ const styles = StyleSheet.create({
   },
   scroll: {
     padding: 20,
-    paddingTop: 48,
     paddingBottom: 40,
   },
   titulo: {

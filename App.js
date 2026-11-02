@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { SafeAreaView, StyleSheet, StatusBar, ActivityIndicator, View, Text, Alert } from "react-native";
+import { StyleSheet, StatusBar, ActivityIndicator, View, Text, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFonts } from "@expo-google-fonts/poppins";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import {
   Poppins_400Regular,
   Poppins_500Medium,
@@ -95,17 +95,21 @@ export default function App() {
 
   if (!fuentesCargadas || !sesionCargada) {
     return (
-      <SafeAreaView style={[styles.contenedor, styles.centro]}>
-        <StatusBar barStyle="light-content" backgroundColor={colores.primarioOscuro} />
-        <ActivityIndicator size="large" color={colores.primario} />
-        <Text style={styles.cargandoTexto}>Preparando la Sabana…</Text>
-      </SafeAreaView>
+      <SafeAreaProvider>
+        <SafeAreaView style={[styles.contenedor, styles.centro]}>
+          <StatusBar barStyle="light-content" backgroundColor={colores.primarioOscuro} />
+          <ActivityIndicator size="large" color={colores.primario} />
+          <Text style={styles.cargandoTexto}>Preparando la Sabana…</Text>
+        </SafeAreaView>
+      </SafeAreaProvider>
     );
   }
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={styles.contenedor}>
+      {/* edges sin "top": el héroe se dibuja a sangre por debajo de la barra
+          de estado y cada pantalla usa los insets para colocar su contenido. */}
+      <SafeAreaView style={styles.contenedor} edges={["left", "right", "bottom"]}>
         <StatusBar barStyle="light-content" backgroundColor={colores.primarioOscuro} />
 
         {modoFormulario ? (
