@@ -19,6 +19,7 @@ import LugarCard from "../components/LugarCard";
 import { obtenerLugares, obtenerCategorias, obtenerUrlImagen, SITE_URL } from "../api";
 import { obtenerFavoritos, alternarFavorito } from "../favoritos";
 import { obtenerDeCache, tieneEnCache, guardarEnCache } from "../cacheLugares";
+import { obtenerFiltrosLista, guardarFiltrosLista } from "../estadoLista";
 import { colores, radio, sombras, fuentes } from "../theme";
 
 // Fotos del hero: las mismas del crossfade del sitio web (Frontend/app.js)
@@ -31,8 +32,10 @@ const FOTOS_HERO = [
   `${SITE_URL}/img/guacari.jpg`,
 ];
 
-// Clave de la vista inicial: búsqueda vacía, sin categoría, página 1.
-const CLAVE_INICIAL = "|0|1";
+/** Clave de caché para una combinación de filtros + página. */
+function claveCache(buscar, idCategoria, pagina) {
+  return `${(buscar || "").trim().toLowerCase()}|${idCategoria || 0}|${pagina}`;
+}
 
 export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuevoLugar, onCerrarSesion }) {
   const refLista = useRef(null);
@@ -45,15 +48,18 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
   // Respeto la "zona segura" del teléfono: reloj, wifi y batería arriba
   const insets = useSafeAreaInsets();
 
-  // Si ya visitamos la vista inicial ("Todos"), arrancamos con esos datos para
-  // que al volver del detalle no aparezca ninguna pantalla de carga.
-  const datosIniciales = obtenerDeCache(CLAVE_INICIAL);
+  // Recuperamos los filtros de la última visita a la lista para volver a la
+  // misma categoría/búsqueda/favoritos al regresar del detalle.
+  const filtrosGuardados = obtenerFiltrosLista();
+  const datosIniciales = obtenerDeCache(
+    claveCache(filtrosGuardados.buscar, filtrosGuardados.idCategoria, 1)
+  );
 
   const [lugares, setLugares] = useState(() => datosIniciales?.lugares || []);
   const [categorias, setCategorias] = useState([]);
   const [cargando, setCargando] = useState(() => !datosIniciales);
-  const [buscar, setBuscar] = useState("");
-  const [idCategoria, setIdCategoria] = useState(0);
+  const [buscar, setBuscar] = useState(filtrosGuardados.buscar);
+  const [idCategoria, setIdCategoria] = useState(filtrosGuardados.idCategoria);
   const [pagina, setPagina] = useState(1);
   const [totalPaginas, setTotalPaginas] = useState(
     () => datosIniciales?.paginacion?.totalPaginas || 1
@@ -65,7 +71,7 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
   const [error, setError] = useState(null);
   const [imagenHeroIndex, setImagenHeroIndex] = useState(0);
   const [favoritos, setFavoritos] = useState(new Set());
-  const [soloFavoritos, setSoloFavoritos] = useState(false);
+  const [soloFavoritos, setSoloFavoritos] = useState(filtrosGuardados.soloFavoritos);
   // Capas de opacidad del hero: una por foto, como las dos capas del crossfade web
   const [opacidadesHero] = useState(() => FOTOS_HERO.map((_, i) => new Animated.Value(i === 0 ? 1 : 0)));
 
@@ -82,9 +88,7 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
       }
     };
 
-    const clave = `${(filtros.buscar || "").trim().toLowerCase()}|${
-      filtros.idCategoria || 0
-    }|${paginaDestino}`;
+    const clave = claveCache(filtros.buscar, filtros.idCategoria, paginaDestino);
 
     // Si ya visitamos esta categoría/página, la mostramos al instante.
     if (!forzar && tieneEnCache(clave)) {
@@ -150,6 +154,12 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
     // muestra el fondo negro mientras descarga cada imagen por el túnel
     Promise.all(FOTOS_HERO.map((url) => Image.prefetch(url))).catch(() => {});
   }, []);
+
+  // Recordamos categoría, búsqueda y vista de favoritos para restaurarlas al
+  // volver del detalle (HomeScreen se desmonta y vuelve a montarse).
+  useEffect(() => {
+    guardarFiltrosLista({ buscar, idCategoria, soloFavoritos });
+  }, [buscar, idCategoria, soloFavoritos]);
 
   // Búsqueda/filtros en vivo (con pequeño retardo, como en la web).
   // Siempre recarga desde la página 1: antes, si el usuario ya había paginado
