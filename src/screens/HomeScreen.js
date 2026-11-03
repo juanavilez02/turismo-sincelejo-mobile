@@ -12,6 +12,7 @@ import {
   StatusBar,
   Animated,
   RefreshControl,
+  useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -47,10 +48,9 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
   const categoriaCargadaRef = useRef(false);
   // Respeto la "zona segura" del teléfono: reloj, wifi y batería arriba
   const insets = useSafeAreaInsets();
-  // La barra superior debe quedar SIEMPRE debajo de la barra de estado del
-  // sistema (hora y batería). Si el dispositivo no reporta el inset (algunos
-  // Android), usamos un respaldo para que nunca quede tapada ni superpuesta.
-  const topBarra = insets.top > 0 ? insets.top + 10 : 40;
+  // Hero de borde a borde, con la misma proporción envolvente que la web (88vh)
+  const { height: altoPantalla } = useWindowDimensions();
+  const alturaHeroe = Math.max(460, Math.round(altoPantalla * 0.88));
 
   // Recuperamos los filtros de la última visita a la lista para volver a la
   // misma categoría/búsqueda/favoritos al regresar del detalle.
@@ -299,9 +299,9 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
         ref={refLista}
         ListHeaderComponent={
           <View>
-            {/* ============ HERO (como la web: foto + gradiente + buscador) ============ */}
-            <View style={styles.hero}>
-              {/* Capa base permanente: garantiza que NUNCA se asome el fondo negro */}
+            {/* ============ HERO (réplica del hero web) ============ */}
+            <View style={[styles.hero, { height: alturaHeroe }]}>
+              {/* La foto vive SOLO dentro del hero (capa base + crossfade) */}
               <View style={styles.capaHero}>
                 <Image
                   source={{ uri: FOTOS_HERO[0] }}
@@ -321,43 +321,57 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
                   />
                 </Animated.View>
               ))}
+
+              {/* Overlay oscuro uniforme sobre la foto (como la web) */}
               <LinearGradient
-                colors={[
-                  "rgba(15, 23, 42, 0.78)",
-                  "rgba(15, 23, 42, 0.86)",
-                  "rgba(15, 23, 42, 0.94)",
-                ]}
-                locations={[0, 0.4, 1]}
+                colors={["rgba(15, 23, 42, 0.6)", "rgba(15, 23, 42, 0.75)"]}
                 style={styles.heroGradiente}
               />
 
-              {/* Panel de vidrio del hero: título y descripción, flotante y alineado a 16px */}
-              <View style={[styles.heroPanel, sombras.vidrio]}>
-                <Text style={styles.heroUbicacion}>
-                  📍 Sincelejo · Sucre · Colombia
-                </Text>
-                <Text style={styles.heroTitulo}>
-                  Descubre la{"\n"}
-                  <Text style={styles.heroDestacado}>Sabana</Text> y su gente
-                </Text>
-                <Text style={styles.heroParrafo}>
-                  Plazas históricas, cultura sabanera, gastronomía y los rincones
-                  que hacen única a la capital de Sucre.
-                </Text>
-              </View>
+              <View style={styles.heroInner}>
+                {/* Header dentro del hero, con safe-area para no chocar con la hora */}
+                <View style={[styles.heroHeader, { paddingTop: insets.top + 10 }]}>
+                  <Text style={styles.marcaTexto}>
+                    Turismo<Text style={styles.marcaFuerte}>Sincelejo</Text>
+                  </Text>
+                  <TouchableOpacity
+                    style={[styles.botonLogin, esAdmin && styles.botonLoginAdmin]}
+                    onPress={esAdmin ? onCerrarSesion : onAbrirLogin}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.botonLoginTexto}>
+                      {esAdmin ? "🚪 Salir" : "⚙ Acceso"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
 
-              {/* Buscador al final del hero, fuera del panel de vidrio: su borde
-                  queda a 16px de la pantalla, igual que los chips y tarjetas */}
-              <View style={styles.heroBuscador}>
-                <Text style={styles.heroLupa}>🔍</Text>
-                <TextInput
-                  style={styles.heroInput}
-                  placeholder="Busca mientras escribes: majagual, catedral, pozo..."
-                  placeholderTextColor={colores.tintaSuave}
-                  value={buscar}
-                  onChangeText={setBuscar}
-                  onFocus={() => refLista.current?.scrollToOffset({ animated: true, offset: 140 })}
-                />
+                {/* Texto directamente sobre la foto, sin tarjeta ni sombra */}
+                <View style={styles.heroCentro}>
+                  <Text style={styles.heroUbicacion}>
+                    📍 Sincelejo · Sucre · Colombia
+                  </Text>
+                  <Text style={styles.heroTitulo}>
+                    Descubre la{"\n"}
+                    <Text style={styles.heroDestacado}>Sabana</Text> y su gente
+                  </Text>
+                  <Text style={styles.heroParrafo}>
+                    Plazas históricas, cultura sabanera, gastronomía y los rincones
+                    que hacen única a la capital de Sucre.
+                  </Text>
+                </View>
+
+                {/* Buscador al final del hero, con 16px laterales */}
+                <View style={styles.heroBuscador}>
+                  <Text style={styles.heroLupa}>🔍</Text>
+                  <TextInput
+                    style={styles.heroInput}
+                    placeholder="Busca mientras escribes: majagual, catedral, pozo..."
+                    placeholderTextColor={colores.tintaSuave}
+                    value={buscar}
+                    onChangeText={setBuscar}
+                    onFocus={() => refLista.current?.scrollToOffset({ animated: true, offset: 140 })}
+                  />
+                </View>
               </View>
             </View>
 
@@ -479,28 +493,6 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
         }
       />
 
-      {/* ============ BARRA SUPERIOR FIJA (navbar glass móvil, como la web) ============ */}
-      <View
-        style={[
-          styles.barraMarca,
-          { top: topBarra },
-          sombras.vidrio,
-        ]}
-      >
-        <Text style={styles.marcaTexto}>
-          Turismo<Text style={styles.marcaFuerte}>Sincelejo</Text>
-        </Text>
-        <TouchableOpacity
-          style={[styles.botonLogin, esAdmin && styles.botonLoginAdmin]}
-          onPress={esAdmin ? onCerrarSesion : onAbrirLogin}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.botonLoginTexto}>
-            {esAdmin ? "🚪 Salir" : "⚙ Acceso"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
       {error && lugares.length > 0 && (
         <Text style={styles.errorFlotante}>{error}</Text>
       )}
@@ -573,14 +565,9 @@ const styles = StyleSheet.create({
 
   /* ---------- HERO ---------- */
   hero: {
-    height: 330,
     backgroundColor: colores.tinta,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
     overflow: "hidden",
-    justifyContent: "flex-end",
-    // Anula el paddingHorizontal de la lista: el hero debe llegar de borde a
-    // borde para que no queden franjas claras sin sombrear a los lados.
+    // Anula el paddingHorizontal de la lista: el hero ocupa el 100% del ancho.
     marginHorizontal: -8,
   },
   heroFondo: {
@@ -601,46 +588,41 @@ const styles = StyleSheet.create({
   heroGradiente: {
     ...StyleSheet.absoluteFillObject,
   },
-  barraMarca: {
-    position: "absolute",
-    left: 16,
-    right: 16,
+  // Contenido del hero: header arriba, texto al centro y buscador al final
+  heroInner: {
+    flex: 1,
+    justifyContent: "space-between",
+  },
+  heroHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingTop: 12,
     paddingBottom: 12,
-    borderRadius: 20,
-    backgroundColor: "rgba(15, 23, 42, 0.55)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.18)",
-    zIndex: 10,
   },
   marcaTexto: {
     color: colores.blanco,
-    fontSize: 18,
+    fontSize: 19,
     fontFamily: fuentes.bold,
+    letterSpacing: -0.4,
   },
   marcaFuerte: {
     color: colores.acento,
+    fontFamily: fuentes.extrabold,
   },
   botonLogin: {
-    backgroundColor: "rgba(255,255,255,0.22)",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    backgroundColor: "rgba(15, 23, 42, 0.82)",
+    paddingHorizontal: 16,
+    paddingVertical: 9,
     borderRadius: radio.pill,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.4)",
   },
   botonLoginTexto: {
     color: colores.blanco,
     fontSize: 13,
-    fontFamily: fuentes.semibold,
+    fontFamily: fuentes.medio,
   },
   botonLoginAdmin: {
     backgroundColor: colores.acento,
-    borderColor: "rgba(255,255,255,0.7)",
   },
   fab: {
     position: "absolute",
@@ -656,39 +638,42 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: fuentes.semibold,
   },
-  heroPanel: {
-    backgroundColor: "rgba(15, 23, 42, 0.55)",
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.18)",
-    // Tarjeta flotante: mismos 16px laterales que chips y tarjetas
-    marginHorizontal: 16,
-    marginBottom: 12,
-    padding: 16,
+  // Texto directamente sobre la foto: sin tarjeta, borde ni sombra
+  heroCentro: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 16,
   },
   heroUbicacion: {
-    color: "#FBBF24",
-    fontSize: 12.5,
-    fontFamily: fuentes.bold,
-    letterSpacing: 0.6,
-    marginBottom: 8,
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontFamily: fuentes.medio,
+    letterSpacing: 0.4,
+    marginBottom: 14,
+    textAlign: "center",
+    opacity: 0.95,
   },
   heroTitulo: {
     color: "#FFFFFF",
-    fontSize: 30,
-    lineHeight: 36,
+    fontSize: 40,
+    lineHeight: 44,
     fontFamily: fuentes.extrabold,
-    marginBottom: 8,
+    letterSpacing: -1.2,
+    textAlign: "center",
+    marginBottom: 14,
   },
   heroDestacado: {
     color: colores.acento,
   },
   heroParrafo: {
     color: "#FFFFFF",
-    fontSize: 13.5,
-    lineHeight: 20,
-    fontFamily: fuentes.medio,
-    marginBottom: 16,
+    fontSize: 15,
+    lineHeight: 23,
+    fontFamily: fuentes.regular,
+    textAlign: "center",
+    opacity: 0.92,
+    maxWidth: 560,
   },
   heroBuscador: {
     flexDirection: "row",
@@ -696,11 +681,15 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.96)",
     borderRadius: radio.pill,
     paddingHorizontal: 16,
-    height: 50,
+    height: 52,
     // Alineado con chips y tarjetas (16px) y separado del borde inferior del hero
     marginHorizontal: 16,
-    marginBottom: 20,
-    ...sombras.reposo,
+    marginBottom: 24,
+    shadowColor: "#000000",
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 6,
   },
   heroLupa: {
     fontSize: 16,
