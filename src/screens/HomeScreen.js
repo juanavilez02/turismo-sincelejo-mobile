@@ -165,7 +165,19 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
   // `soloFavoritos` quedaba activo y la lista seguía filtrada a favoritos,
   // dando la sensación de que las demás categorías no respondían.
   const seleccionarCategoria = (id) => {
+    const yaActiva = !soloFavoritos && id === idCategoria;
     setSoloFavoritos(false);
+    if (yaActiva) return;
+
+    // Invalida cualquier petición en vuelo de la categoría anterior.
+    peticionRef.current += 1;
+
+    // Vaciamos la lista en el acto: si no, durante la carga se seguirían
+    // viendo los lugares de la categoría anterior y luego "saltarían" a los
+    // nuevos. Con esto se muestra el cargador hasta tener la respuesta correcta.
+    setLugares([]);
+    setPagina(1);
+    setCargando(true);
     setIdCategoria(id);
   };
 
