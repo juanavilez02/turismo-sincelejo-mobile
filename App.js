@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   StyleSheet,
   StatusBar,
@@ -31,6 +31,8 @@ export default function App() {
   const [mostrarLogin, setMostrarLogin] = useState(false);
   const [lugarSeleccionado, setLugarSeleccionado] = useState(null);
   const [modoFormulario, setModoFormulario] = useState(null); // null | {} | {lugar}
+  // Evita mostrar varias veces el aviso si llegan varios 401 en paralelo.
+  const avisoExpiradoRef = useRef(false);
 
   // Al arrancar: recuperar la sesión guardada en el teléfono (si ya entró antes)
   useEffect(() => {
@@ -56,6 +58,7 @@ export default function App() {
   });
 
   const iniciarSesion = async (t) => {
+    avisoExpiradoRef.current = false;
     setToken(t);
     setMostrarLogin(false);
     await guardarToken(t);
@@ -72,19 +75,18 @@ export default function App() {
   // sesión y avisamos una sola vez. Se registra una vez al montar.
   useEffect(() => {
     configurarManejadorNoAutorizado(() => {
-      setToken((actual) => {
-        if (actual) {
-          Alert.alert(
-            "Sesión expirada",
-            "Tu sesión caducó por seguridad. Vuelve a entrar."
-          );
-        }
-        return null;
-      });
+      setToken(null);
       setModoFormulario(null);
       setLugarSeleccionado(null);
       setMostrarLogin(true);
       borrarToken();
+      if (!avisoExpiradoRef.current) {
+        avisoExpiradoRef.current = true;
+        Alert.alert(
+          "Sesión expirada",
+          "Tu sesión caducó por seguridad. Vuelve a entrar."
+        );
+      }
     });
   }, []);
 
