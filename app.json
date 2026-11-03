@@ -14,7 +14,8 @@
     ],
     "android": {
       "softwareKeyboardLayoutMode": "resize",
-      "package": "com.juanavilez.turismosincelejo"
+      "package": "com.juanavilez.turismosincelejo",
+      "versionCode": 1
     },
     "ios": {
       "supportsTablet": true,
