@@ -341,9 +341,10 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
                 </Animated.View>
               ))}
 
-              {/* Overlay oscuro uniforme sobre la foto (como la web) */}
+              {/* Overlay oscuro uniforme sobre TODA la foto: asegura el
+                  contraste del texto aunque la imagen tenga zonas claras */}
               <LinearGradient
-                colors={["rgba(15, 23, 42, 0.6)", "rgba(15, 23, 42, 0.75)"]}
+                colors={["rgba(0, 0, 0, 0.55)", "rgba(0, 0, 0, 0.70)"]}
                 style={styles.heroGradiente}
               />
 
@@ -620,6 +621,9 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     marginTop: 0,
+    // cover + centrado (RN centra por defecto): la zona oscura de la foto
+    // queda detrás del texto principal en cualquier tamaño de pantalla
+    resizeMode: "cover",
   },
   heroGradiente: {
     ...StyleSheet.absoluteFillObject,
@@ -654,6 +658,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: fuentes.bold,
     letterSpacing: -0.4,
+    textShadowColor: "rgba(0, 0, 0, 0.8)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 4,
   },
   marcaFuerte: {
     color: colores.acento,
@@ -704,6 +711,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     textAlign: "center",
     opacity: 0.95,
+    textShadowColor: "rgba(0, 0, 0, 0.8)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 4,
   },
   heroTitulo: {
     color: "#FFFFFF",
@@ -713,6 +723,9 @@ const styles = StyleSheet.create({
     letterSpacing: -1.2,
     textAlign: "center",
     marginBottom: 12,
+    textShadowColor: "rgba(0, 0, 0, 0.8)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 4,
   },
   heroDestacado: {
     color: colores.acento,
@@ -725,6 +738,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
     opacity: 0.92,
     maxWidth: 560,
+    textShadowColor: "rgba(0, 0, 0, 0.8)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 4,
   },
   // Envoltorio con 16px laterales: el buscador queda centrado y con ancho máximo
   heroBuscadorWrap: {
