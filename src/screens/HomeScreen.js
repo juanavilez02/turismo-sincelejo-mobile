@@ -11,6 +11,7 @@ import {
   ScrollView,
   StatusBar,
   Animated,
+  RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -153,6 +154,13 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
     ? lugares.filter((l) => favoritos.has(l.idLugar))
     : lugares;
 
+  // Con numColumns=2, si la última fila tiene un solo elemento la tarjeta se
+  // estira a todo el ancho. Añadimos un hueco invisible para mantener la rejilla.
+  const datosLista =
+    lugaresVisibles.length % 2 === 1
+      ? [...lugaresVisibles, { idLugar: "__relleno__", __relleno: true }]
+      : lugaresVisibles;
+
   if (cargando && lugares.length === 0) {
     return (
       <View style={[styles.contenedor, styles.centro]}>
@@ -260,19 +268,31 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
             </View>
           </View>
         }
-        data={lugaresVisibles}
-        keyExtractor={(item) => item.idLugar.toString()}
-        renderItem={({ item }) => (
-          <LugarCard
-            lugar={item}
-            favorito={favoritos.has(item.idLugar)}
-            onAlternarFavorito={() => alTocarFavorito(item.idLugar)}
-            onPress={() => onVerDetalle(item)}
-          />
-        )}
+        data={datosLista}
+        keyExtractor={(item) => (item.__relleno ? "relleno" : item.idLugar.toString())}
+        renderItem={({ item }) =>
+          item.__relleno ? (
+            <View style={styles.tarjetaRelleno} />
+          ) : (
+            <LugarCard
+              lugar={item}
+              favorito={favoritos.has(item.idLugar)}
+              onAlternarFavorito={() => alTocarFavorito(item.idLugar)}
+              onPress={() => onVerDetalle(item)}
+            />
+          )
+        }
         numColumns={2}
         columnWrapperStyle={styles.filaTarjetas}
         contentContainerStyle={styles.lista}
+        refreshControl={
+          <RefreshControl
+            refreshing={cargando && lugares.length > 0}
+            onRefresh={() => cargarLugares(1, { buscar, idCategoria })}
+            colors={[colores.primario]}
+            tintColor={colores.primario}
+          />
+        }
         ListEmptyComponent={
           <Text style={styles.sinResultados}>
             {soloFavoritos
@@ -593,6 +613,10 @@ const styles = StyleSheet.create({
   },
   filaTarjetas: {
     justifyContent: "space-between",
+  },
+  tarjetaRelleno: {
+    flex: 1,
+    margin: 8,
   },
   sinResultados: {
     textAlign: "center",
