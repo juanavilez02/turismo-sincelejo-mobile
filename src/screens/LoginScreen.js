@@ -11,10 +11,12 @@ import {
   ScrollView,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { login } from "../api";
 import { colores, radio, sombras, fuentes } from "../theme";
 
 export default function LoginScreen({ onLogin, onVolver }) {
+  const insets = useSafeAreaInsets();
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
   const [mostrarPassword, setMostrarPassword] = useState(false);
@@ -49,7 +51,10 @@ export default function LoginScreen({ onLogin, onVolver }) {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 24 }]}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* Marca, como el navbar de la web */}
           <Text style={styles.marca}>
             Turismo<Text style={styles.marcaFuerte}>Sincelejo</Text>
@@ -137,7 +142,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: "center",
     padding: 24,
-    paddingTop: 60,
     paddingBottom: 40,
   },
   marca: {

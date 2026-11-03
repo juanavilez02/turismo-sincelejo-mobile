@@ -8,6 +8,7 @@ import {
   StyleSheet,
   StatusBar,
   Linking,
+  useWindowDimensions,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -24,6 +25,9 @@ const EMOJIS_CATEGORIAS = {
 
 export default function DetalleScreen({ lugar, onVolver, esAdmin, onEditar, onEliminar }) {
   const insets = useSafeAreaInsets();
+  // Hero de la ficha: proporcionado al alto real del teléfono (no fijo en px)
+  const { height: altoPantalla } = useWindowDimensions();
+  const alturaHeroe = Math.min(380, Math.max(260, Math.round(altoPantalla * 0.42)));
   const urlImagen = obtenerUrlImagen(lugar.imagen);
   const emoji = EMOJIS_CATEGORIAS[lugar.categoria] ?? "📍";
 
@@ -38,7 +42,7 @@ export default function DetalleScreen({ lugar, onVolver, esAdmin, onEditar, onEl
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* ============ FOTO HERO con botón volver encima ============ */}
-        <View style={styles.hero}>
+        <View style={[styles.hero, { height: alturaHeroe }]}>
           {urlImagen ? (
             <Image source={{ uri: urlImagen }} style={styles.heroImagen} resizeMode="cover" />
           ) : (
@@ -117,7 +121,6 @@ const styles = StyleSheet.create({
 
   /* ---------- HERO ---------- */
   hero: {
-    height: 340,
     backgroundColor: colores.tinta,
     borderBottomLeftRadius: 26,
     borderBottomRightRadius: 26,

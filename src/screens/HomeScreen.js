@@ -57,6 +57,8 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
   const tamTituloHeroe = Math.round(
     Math.min(44, Math.max(30, anchoPantalla * 0.105))
   );
+  // Rejilla responsiva: 2 columnas en teléfonos, 3 en tablets (>= 700px)
+  const numColumnas = anchoPantalla >= 700 ? 3 : 2;
 
   // Scroll del listado: el header fijo se vuelve sólido al bajar.
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -230,12 +232,19 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
     ? lugares.filter((l) => favoritos.has(l.idLugar))
     : lugares;
 
-  // Con numColumns=2, si la última fila tiene un solo elemento la tarjeta se
-  // estira a todo el ancho. Añadimos un hueco invisible para mantener la rejilla.
-  const datosLista =
-    lugaresVisibles.length % 2 === 1
-      ? [...lugaresVisibles, { idLugar: "__relleno__", __relleno: true }]
-      : lugaresVisibles;
+  // Rejilla responsiva: si la última fila queda incompleta, añadimos huecos
+  // invisibles para que ninguna tarjeta se estire a todo el ancho.
+  const huecosRelleno =
+    (numColumnas - (lugaresVisibles.length % numColumnas)) % numColumnas;
+  const datosLista = huecosRelleno
+    ? [
+        ...lugaresVisibles,
+        ...Array.from({ length: huecosRelleno }, (_, i) => ({
+          idLugar: `__relleno_${i}`,
+          __relleno: true,
+        })),
+      ]
+    : lugaresVisibles;
 
   // Elegir una categoría SIEMPRE sale de la vista de favoritos. Antes
   // `soloFavoritos` quedaba activo y la lista seguía filtrada a favoritos,
@@ -424,8 +433,9 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
             </View>
           </View>
         }
+        key={`grid-${numColumnas}`}
         data={datosLista}
-        keyExtractor={(item) => (item.__relleno ? "relleno" : item.idLugar.toString())}
+        keyExtractor={(item) => item.idLugar.toString()}
         renderItem={({ item }) =>
           item.__relleno ? (
             <View style={styles.tarjetaRelleno} />
@@ -438,7 +448,7 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
             />
           )
         }
-        numColumns={2}
+        numColumns={numColumnas}
         columnWrapperStyle={styles.filaTarjetas}
         contentContainerStyle={styles.lista}
         refreshControl={
