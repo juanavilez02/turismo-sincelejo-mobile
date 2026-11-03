@@ -75,6 +75,13 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
   // Capas de opacidad del hero: una por foto, como las dos capas del crossfade web
   const [opacidadesHero] = useState(() => FOTOS_HERO.map((_, i) => new Animated.Value(i === 0 ? 1 : 0)));
 
+  // Carrusel de categorías: refs/estado para centrar el chip activo al volver
+  // del detalle (si no, el carrusel aparece al inicio y hay que buscarlo).
+  const refChips = useRef(null);
+  const ultimaCentradaRef = useRef(null);
+  const [anchoChips, setAnchoChips] = useState(0);
+  const [posicionesChips, setPosicionesChips] = useState({});
+
   // ---------- Carga de datos ----------
   const cargarLugares = useCallback(async (paginaDestino = 1, filtros = {}, forzar = false) => {
     const aplicar = (data) => {
@@ -241,6 +248,34 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
     setSoloFavoritos(!soloFavoritos);
   };
 
+  // Guarda la posición de cada chip para poder centrarlo después.
+  const registrarPosicionChip = (clave, evento) => {
+    const { x, width } = evento.nativeEvent.layout;
+    setPosicionesChips((prev) => {
+      const actual = prev[clave];
+      if (actual && actual.x === x && actual.width === width) return prev;
+      return { ...prev, [clave]: { x, width } };
+    });
+  };
+
+  // Centra el chip de la categoría activa. Al volver del detalle se hace sin
+  // animación para que aparezca ya en su sitio; al cambiar de categoría, animado.
+  useEffect(() => {
+    const claveActiva = soloFavoritos
+      ? "fav"
+      : idCategoria === 0
+        ? "todos"
+        : `cat-${idCategoria}`;
+    const pos = posicionesChips[claveActiva];
+    if (!pos || !anchoChips) return;
+    if (ultimaCentradaRef.current === claveActiva) return;
+
+    const primeraVez = ultimaCentradaRef.current === null;
+    ultimaCentradaRef.current = claveActiva;
+    const destino = Math.max(0, pos.x - anchoChips / 2 + pos.width / 2);
+    refChips.current?.scrollTo({ x: destino, animated: !primeraVez });
+  }, [idCategoria, soloFavoritos, posicionesChips, anchoChips]);
+
   // El loader a pantalla completa solo aparece en el primer arranque. Después
   // (p. ej. al cambiar de categoría) usamos el indicador dentro de la lista.
   if (cargando && lugares.length === 0 && !cargaInicialHechaRef.current) {
@@ -324,14 +359,17 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
             {/* ============ CHIPS DE CATEGORÍAS ============ */}
             <View style={styles.chipsSeccion}>
               <ScrollView
+                ref={refChips}
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.chips}
+                onLayout={(e) => setAnchoChips(e.nativeEvent.layout.width)}
               >
                 <Chip
                   etiqueta="Todos"
                   activo={!soloFavoritos && !idCategoria}
                   onPress={() => seleccionarCategoria(0)}
+                  onLayout={(e) => registrarPosicionChip("todos", e)}
                 />
                 {categorias.map((cat) => (
                   <Chip
@@ -339,12 +377,14 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
                     etiqueta={`${cat.nombre}`}
                     activo={!soloFavoritos && idCategoria === cat.idCategoria}
                     onPress={() => seleccionarCategoria(cat.idCategoria)}
+                    onLayout={(e) => registrarPosicionChip(`cat-${cat.idCategoria}`, e)}
                   />
                 ))}
                 <Chip
                   etiqueta="❤️ Mis favoritos"
                   activo={soloFavoritos}
                   onPress={alternarVistaFavoritos}
+                  onLayout={(e) => registrarPosicionChip("fav", e)}
                 />
               </ScrollView>
             </View>
@@ -489,11 +529,12 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
   );
 }
 
-function Chip({ etiqueta, activo, onPress }) {
+function Chip({ etiqueta, activo, onPress, onLayout }) {
   return (
     <TouchableOpacity
       style={[styles.chip, activo && styles.chipActivo]}
       onPress={onPress}
+      onLayout={onLayout}
       activeOpacity={0.8}
     >
       <Text style={[styles.chipTexto, activo && styles.chipTextoActivo]}>
