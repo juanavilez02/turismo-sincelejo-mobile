@@ -23,6 +23,7 @@ import LoginScreen from "./src/screens/LoginScreen";
 import FormularioLugarScreen from "./src/screens/FormularioLugarScreen";
 import { eliminarLugar, configurarManejadorNoAutorizado } from "./src/api";
 import { obtenerToken, guardarToken, borrarToken } from "./src/almacenamiento";
+import { limpiarCacheLugares } from "./src/cacheLugares";
 import { colores, fuentes } from "./src/theme";
 
 export default function App() {
@@ -123,6 +124,7 @@ export default function App() {
           onPress: async () => {
             try {
               await eliminarLugar(lugar.idLugar, token);
+              limpiarCacheLugares();
               setLugarSeleccionado(null);
               Alert.alert("Listo", "Lugar eliminado exitosamente.");
             } catch (err) {
@@ -157,7 +159,10 @@ export default function App() {
         <FormularioLugarScreen
           lugar={modoFormulario?.lugar}
           token={token}
-          onGuardar={() => setModoFormulario(null)}
+          onGuardar={() => {
+            limpiarCacheLugares();
+            setModoFormulario(null);
+          }}
           onCancelar={() => setModoFormulario(null)}
         />
       ) : mostrarLogin ? (

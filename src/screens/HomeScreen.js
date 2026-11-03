@@ -18,6 +18,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import LugarCard from "../components/LugarCard";
 import { obtenerLugares, obtenerCategorias, obtenerUrlImagen, SITE_URL } from "../api";
 import { obtenerFavoritos, alternarFavorito } from "../favoritos";
+import { obtenerDeCache, tieneEnCache, guardarEnCache } from "../cacheLugares";
 import { colores, radio, sombras, fuentes } from "../theme";
 
 // Fotos del hero: las mismas del crossfade del sitio web (Frontend/app.js)
@@ -30,29 +31,36 @@ const FOTOS_HERO = [
   `${SITE_URL}/img/guacari.jpg`,
 ];
 
+// Clave de la vista inicial: búsqueda vacía, sin categoría, página 1.
+const CLAVE_INICIAL = "|0|1";
+
 export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuevoLugar, onCerrarSesion }) {
   const refLista = useRef(null);
   // Identifica cada petición para descartar respuestas obsoletas cuando el
   // usuario escribe rápido o cambia de filtro mientras una carga está en vuelo.
   const peticionRef = useRef(0);
-  // Cache local por filtro+página: al volver a una categoría ya visitada se
-  // pinta al instante, sin esperar a la red (patrón cache-first).
-  const cacheRef = useRef(new Map());
-  // A partir de la primera carga lograda ya no mostramos el loader a pantalla
-  // completa: los cambios de categoría usan un indicador dentro de la lista.
-  const cargaInicialHechaRef = useRef(false);
   // Marca que la categoría se cargó al instante, para que el efecto de filtros
   // no repita la misma petición 400 ms después.
   const categoriaCargadaRef = useRef(false);
   // Respeto la "zona segura" del teléfono: reloj, wifi y batería arriba
   const insets = useSafeAreaInsets();
-  const [lugares, setLugares] = useState([]);
+
+  // Si ya visitamos la vista inicial ("Todos"), arrancamos con esos datos para
+  // que al volver del detalle no aparezca ninguna pantalla de carga.
+  const datosIniciales = obtenerDeCache(CLAVE_INICIAL);
+
+  const [lugares, setLugares] = useState(() => datosIniciales?.lugares || []);
   const [categorias, setCategorias] = useState([]);
-  const [cargando, setCargando] = useState(true);
+  const [cargando, setCargando] = useState(() => !datosIniciales);
   const [buscar, setBuscar] = useState("");
   const [idCategoria, setIdCategoria] = useState(0);
   const [pagina, setPagina] = useState(1);
-  const [totalPaginas, setTotalPaginas] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(
+    () => datosIniciales?.paginacion?.totalPaginas || 1
+  );
+  // A partir de la primera carga lograda ya no mostramos el loader a pantalla
+  // completa: los cambios de categoría usan un indicador dentro de la lista.
+  const cargaInicialHechaRef = useRef(Boolean(datosIniciales));
   const [cargandoMas, setCargandoMas] = useState(false);
   const [error, setError] = useState(null);
   const [imagenHeroIndex, setImagenHeroIndex] = useState(0);
@@ -79,8 +87,8 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
     }|${paginaDestino}`;
 
     // Si ya visitamos esta categoría/página, la mostramos al instante.
-    if (!forzar && cacheRef.current.has(clave)) {
-      aplicar(cacheRef.current.get(clave));
+    if (!forzar && tieneEnCache(clave)) {
+      aplicar(obtenerDeCache(clave));
       cargaInicialHechaRef.current = true;
       setError(null);
       setCargando(false);
@@ -100,7 +108,7 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
       if (idPeticion !== peticionRef.current) return; // llegó tarde: la ignoramos
 
       cargaInicialHechaRef.current = true;
-      cacheRef.current.set(clave, data);
+      guardarEnCache(clave, data);
       aplicar(data);
     } catch (err) {
       if (idPeticion !== peticionRef.current) return;
