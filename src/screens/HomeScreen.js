@@ -47,6 +47,10 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
   const categoriaCargadaRef = useRef(false);
   // Respeto la "zona segura" del teléfono: reloj, wifi y batería arriba
   const insets = useSafeAreaInsets();
+  // La barra superior debe quedar SIEMPRE debajo de la barra de estado del
+  // sistema (hora y batería). Si el dispositivo no reporta el inset (algunos
+  // Android), usamos un respaldo para que nunca quede tapada ni superpuesta.
+  const topBarra = insets.top > 0 ? insets.top + 10 : 40;
 
   // Recuperamos los filtros de la última visita a la lista para volver a la
   // misma categoría/búsqueda/favoritos al regresar del detalle.
@@ -327,8 +331,8 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
                 style={styles.heroGradiente}
               />
 
-              {/* Barra de marca: ahora vive FUERA de la lista, fija en la pantalla */}
-              <View style={[styles.heroContenido, styles.heroPanel, sombras.vidrio]}>
+              {/* Panel de vidrio del hero: título y descripción, flotante y alineado a 16px */}
+              <View style={[styles.heroPanel, sombras.vidrio]}>
                 <Text style={styles.heroUbicacion}>
                   📍 Sincelejo · Sucre · Colombia
                 </Text>
@@ -340,19 +344,20 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
                   Plazas históricas, cultura sabanera, gastronomía y los rincones
                   que hacen única a la capital de Sucre.
                 </Text>
+              </View>
 
-                {/* Buscador integrado en el hero, como en la web */}
-                <View style={styles.heroBuscador}>
-                  <Text style={styles.heroLupa}>🔍</Text>
-                  <TextInput
-                    style={styles.heroInput}
-                    placeholder="Busca mientras escribes: majagual, catedral, pozo..."
-                    placeholderTextColor={colores.tintaSuave}
-                    value={buscar}
-                    onChangeText={setBuscar}
-                    onFocus={() => refLista.current?.scrollToOffset({ animated: true, offset: 140 })}
-                  />
-                </View>
+              {/* Buscador al final del hero, fuera del panel de vidrio: su borde
+                  queda a 16px de la pantalla, igual que los chips y tarjetas */}
+              <View style={styles.heroBuscador}>
+                <Text style={styles.heroLupa}>🔍</Text>
+                <TextInput
+                  style={styles.heroInput}
+                  placeholder="Busca mientras escribes: majagual, catedral, pozo..."
+                  placeholderTextColor={colores.tintaSuave}
+                  value={buscar}
+                  onChangeText={setBuscar}
+                  onFocus={() => refLista.current?.scrollToOffset({ animated: true, offset: 140 })}
+                />
               </View>
             </View>
 
@@ -478,7 +483,7 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
       <View
         style={[
           styles.barraMarca,
-          { top: insets.top + 8 },
+          { top: topBarra },
           sombras.vidrio,
         ]}
       >
@@ -598,8 +603,8 @@ const styles = StyleSheet.create({
   },
   barraMarca: {
     position: "absolute",
-    left: 12,
-    right: 12,
+    left: 16,
+    right: 16,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -651,17 +656,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: fuentes.semibold,
   },
-  heroContenido: {
-    paddingHorizontal: 20,
-    paddingBottom: 22,
-  },
   heroPanel: {
     backgroundColor: "rgba(15, 23, 42, 0.55)",
     borderRadius: 18,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.18)",
-    padding: 14,
-    paddingBottom: 14,
+    // Tarjeta flotante: mismos 16px laterales que chips y tarjetas
+    marginHorizontal: 16,
+    marginBottom: 12,
+    padding: 16,
   },
   heroUbicacion: {
     color: "#FBBF24",
@@ -694,6 +697,9 @@ const styles = StyleSheet.create({
     borderRadius: radio.pill,
     paddingHorizontal: 16,
     height: 50,
+    // Alineado con chips y tarjetas (16px) y separado del borde inferior del hero
+    marginHorizontal: 16,
+    marginBottom: 20,
     ...sombras.reposo,
   },
   heroLupa: {
