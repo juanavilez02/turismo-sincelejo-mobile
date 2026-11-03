@@ -359,7 +359,8 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
                       styles.heroTitulo,
                       {
                         fontSize: tamTituloHeroe,
-                        lineHeight: Math.round(tamTituloHeroe * 1.1),
+                        // 1.22 deja ver completo el descendente de la "g"/"y"
+                        lineHeight: Math.round(tamTituloHeroe * 1.22),
                       },
                     ]}
                   >
@@ -718,11 +719,13 @@ const styles = StyleSheet.create({
   heroTitulo: {
     color: "#FFFFFF",
     fontSize: 40,
-    lineHeight: 44,
+    lineHeight: 48,
     fontFamily: fuentes.extrabold,
     letterSpacing: -1.2,
     textAlign: "center",
     marginBottom: 12,
+    // Android recorta los descendentes (g, y) si el interlineado es ajustado
+    includeFontPadding: true,
     textShadowColor: "rgba(0, 0, 0, 0.8)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 4,
@@ -733,11 +736,12 @@ const styles = StyleSheet.create({
   heroParrafo: {
     color: "#FFFFFF",
     fontSize: 14.5,
-    lineHeight: 22,
+    lineHeight: 23,
     fontFamily: fuentes.regular,
     textAlign: "center",
     opacity: 0.92,
     maxWidth: 560,
+    includeFontPadding: true,
     textShadowColor: "rgba(0, 0, 0, 0.8)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 4,
