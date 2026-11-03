@@ -328,7 +328,7 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
               />
 
               {/* Barra de marca: ahora vive FUERA de la lista, fija en la pantalla */}
-              <View style={[styles.heroContenido, styles.heroPanel, sombras.elevada]}>
+              <View style={[styles.heroContenido, styles.heroPanel, sombras.vidrio]}>
                 <Text style={styles.heroUbicacion}>
                   📍 Sincelejo · Sucre · Colombia
                 </Text>
@@ -479,7 +479,7 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
         style={[
           styles.barraMarca,
           { top: insets.top + 8 },
-          sombras.elevada,
+          sombras.vidrio,
         ]}
       >
         <Text style={styles.marcaTexto}>

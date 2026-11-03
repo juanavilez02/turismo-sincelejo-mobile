@@ -39,6 +39,15 @@ export const sombras = {
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 10 },
   },
+  // Sombra suave y compacta para superficies de "vidrio" sobre el hero
+  // (barra superior y panel de texto), para que ambas se vean igual.
+  vidrio: {
+    elevation: 3,
+    shadowColor: "#0F172A",
+    shadowOpacity: 0.14,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+  },
 };
 
 export const fuentes = {
