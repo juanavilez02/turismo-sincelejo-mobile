@@ -5,6 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "scheme": "turismosincelejo",
     "updates": {
       "fallbackToCacheTimeout": 0
     },
@@ -12,15 +13,25 @@
       "**/*"
     ],
     "android": {
-      "softwareKeyboardLayoutMode": "resize"
+      "softwareKeyboardLayoutMode": "resize",
+      "package": "com.juanavilez.turismosincelejo"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.juanavilez.turismosincelejo"
     },
-    "web": {},
+    "web": {
+      "bundler": "metro"
+    },
     "plugins": [
-      "expo-status-bar",
-      "expo-font"
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permite a Turismo Sincelejo acceder a tus fotos para subir imágenes de los lugares.",
+          "cameraPermission": "Permite a Turismo Sincelejo usar la cámara para fotografiar los lugares."
+        }
+      ],
+      "expo-secure-store"
     ]
   }
 }
