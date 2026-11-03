@@ -28,17 +28,44 @@ export function obtenerUrlImagen(ruta) {
 }
 
 /**
+ * Tiempo máximo de espera por petición. Render (plan gratuito) puede tardar
+ * casi un minuto en "despertar", así que damos margen pero evitamos que la
+ * app se quede colgada para siempre si el servidor no responde.
+ */
+const TIEMPO_LIMITE_MS = 90000;
+
+/**
+ * Callback global que la app registra para reaccionar a una sesión expirada
+ * (HTTP 401) en cualquier pantalla. Ver configurarManejadorNoAutorizado().
+ */
+let manejadorNoAutorizado = null;
+
+export function configurarManejadorNoAutorizado(fn) {
+  manejadorNoAutorizado = fn;
+}
+
+/**
  * Realiza una petición a la API con manejo básico de errores
  */
 export async function apiRequest(endpoint, options = {}) {
   const url = `${API_URL}${endpoint}`;
-  
+  const { signal: signalExterno, timeout = TIEMPO_LIMITE_MS, headers: cabeceras, ...resto } = options;
+
+  // Cancelamos la petición si supera el tiempo límite.
+  const controlador = new AbortController();
+  const temporizador = setTimeout(() => controlador.abort(), timeout);
+  if (signalExterno) {
+    if (signalExterno.aborted) controlador.abort();
+    else signalExterno.addEventListener("abort", () => controlador.abort());
+  }
+
   const defaultOptions = {
+    ...resto,
     headers: {
       "Content-Type": "application/json",
-      ...options.headers,
+      ...cabeceras,
     },
-    ...options,
+    signal: controlador.signal,
   };
 
   try {
@@ -50,16 +77,37 @@ export async function apiRequest(endpoint, options = {}) {
     const texto = await response.text();
     const data = texto ? parsearJsonSeguro(texto) : null;
 
+    // 401 fuera del login = el token caducó: avisamos a la app para que cierre
+    // la sesión. En /auth/login un 401 solo significa credenciales erróneas.
+    if (
+      response.status === 401 &&
+      manejadorNoAutorizado &&
+      !endpoint.includes("/auth/login")
+    ) {
+      manejadorNoAutorizado();
+    }
+
     if (!response.ok) {
-      throw new Error((data && data.mensaje) || `Error ${response.status}`);
+      const error = new Error((data && data.mensaje) || `Error ${response.status}`);
+      error.status = response.status;
+      throw error;
     }
 
     return data;
   } catch (error) {
+    if (error.name === "AbortError") {
+      const timeoutError = new Error(
+        "La petición tardó demasiado. Revisa tu conexión e inténtalo de nuevo."
+      );
+      timeoutError.esTimeout = true;
+      throw timeoutError;
+    }
     if (__DEV__) {
       console.error(`[API Error] ${endpoint}:`, error.message);
     }
     throw error;
+  } finally {
+    clearTimeout(temporizador);
   }
 }
 
