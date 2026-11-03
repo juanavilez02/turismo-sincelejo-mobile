@@ -15,7 +15,10 @@
     "android": {
       "softwareKeyboardLayoutMode": "resize",
       "package": "com.juanavilez.turismosincelejo",
-      "versionCode": 1
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "ios": {
       "supportsTablet": true,
@@ -33,6 +36,12 @@
         }
       ],
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "48649f46-80a5-4e66-9e89-f8f6c39b271e"
+      }
+    },
+    "owner": "juhancamilo"
   }
 }
