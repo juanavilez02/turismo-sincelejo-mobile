@@ -35,6 +35,9 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
   // Identifica cada petición para descartar respuestas obsoletas cuando el
   // usuario escribe rápido o cambia de filtro mientras una carga está en vuelo.
   const peticionRef = useRef(0);
+  // Cache local por filtro+página: al volver a una categoría ya visitada se
+  // pinta al instante, sin esperar a la red (patrón cache-first).
+  const cacheRef = useRef(new Map());
   // A partir de la primera carga lograda ya no mostramos el loader a pantalla
   // completa: los cambios de categoría usan un indicador dentro de la lista.
   const cargaInicialHechaRef = useRef(false);
@@ -59,7 +62,32 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
   const [opacidadesHero] = useState(() => FOTOS_HERO.map((_, i) => new Animated.Value(i === 0 ? 1 : 0)));
 
   // ---------- Carga de datos ----------
-  const cargarLugares = useCallback(async (paginaDestino = 1, filtros) => {
+  const cargarLugares = useCallback(async (paginaDestino = 1, filtros = {}, forzar = false) => {
+    const aplicar = (data) => {
+      const nuevos = data.lugares || [];
+      const pag = data.paginacion || {};
+      setTotalPaginas(pag.totalPaginas || 1);
+      if (paginaDestino === 1) {
+        setLugares(nuevos);
+      } else {
+        setLugares((prev) => [...prev, ...nuevos]);
+      }
+    };
+
+    const clave = `${(filtros.buscar || "").trim().toLowerCase()}|${
+      filtros.idCategoria || 0
+    }|${paginaDestino}`;
+
+    // Si ya visitamos esta categoría/página, la mostramos al instante.
+    if (!forzar && cacheRef.current.has(clave)) {
+      aplicar(cacheRef.current.get(clave));
+      cargaInicialHechaRef.current = true;
+      setError(null);
+      setCargando(false);
+      setCargandoMas(false);
+      return;
+    }
+
     const idPeticion = ++peticionRef.current;
     try {
       if (paginaDestino === 1) {
@@ -72,15 +100,8 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
       if (idPeticion !== peticionRef.current) return; // llegó tarde: la ignoramos
 
       cargaInicialHechaRef.current = true;
-      const nuevos = data.lugares || [];
-      const pag = data.paginacion || {};
-      setTotalPaginas(pag.totalPaginas || 1);
-
-      if (paginaDestino === 1) {
-        setLugares(nuevos);
-      } else {
-        setLugares((prev) => [...prev, ...nuevos]);
-      }
+      cacheRef.current.set(clave, data);
+      aplicar(data);
     } catch (err) {
       if (idPeticion !== peticionRef.current) return;
       setError(err.message || "No se pudieron cargar los lugares");
@@ -331,7 +352,7 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
         refreshControl={
           <RefreshControl
             refreshing={cargando && lugares.length > 0}
-            onRefresh={() => cargarLugares(1, { buscar, idCategoria })}
+            onRefresh={() => cargarLugares(1, { buscar, idCategoria }, true)}
             colors={[colores.primario]}
             tintColor={colores.primario}
           />
