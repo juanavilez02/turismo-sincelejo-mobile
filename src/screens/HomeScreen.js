@@ -38,6 +38,9 @@ function claveCache(buscar, idCategoria, pagina) {
   return `${(buscar || "").trim().toLowerCase()}|${idCategoria || 0}|${pagina}`;
 }
 
+// FlatList animada: necesaria para animar el header fijo con driver nativo.
+const FlatListAnimada = Animated.createAnimatedComponent(FlatList);
+
 export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuevoLugar, onCerrarSesion }) {
   const refLista = useRef(null);
   // Identifica cada petición para descartar respuestas obsoletas cuando el
@@ -304,7 +307,7 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
     <View style={styles.contenedor}>
       <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
 
-      <FlatList
+      <FlatListAnimada
         ref={refLista}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
