@@ -289,7 +289,7 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
 
   return (
     <View style={styles.contenedor}>
-      <StatusBar barStyle="light-content" backgroundColor={colores.primarioOscuro} />
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
 
       <FlatList
         ref={refLista}
@@ -319,11 +319,11 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
               ))}
               <LinearGradient
                 colors={[
-                  "rgba(15, 23, 42, 0.62)",
                   "rgba(15, 23, 42, 0.78)",
+                  "rgba(15, 23, 42, 0.86)",
                   "rgba(15, 23, 42, 0.94)",
                 ]}
-                locations={[0, 0.35, 1]}
+                locations={[0, 0.4, 1]}
                 style={styles.heroGradiente}
               />
 
@@ -574,6 +574,9 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 30,
     overflow: "hidden",
     justifyContent: "flex-end",
+    // Anula el paddingHorizontal de la lista: el hero debe llegar de borde a
+    // borde para que no queden franjas claras sin sombrear a los lados.
+    marginHorizontal: -8,
   },
   heroFondo: {
     ...StyleSheet.absoluteFillObject,
@@ -604,9 +607,9 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 12,
     borderRadius: 20,
-    backgroundColor: "rgba(15, 23, 42, 0.62)",
+    backgroundColor: "rgba(15, 23, 42, 0.55)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.35)",
+    borderColor: "rgba(255,255,255,0.18)",
     zIndex: 10,
   },
   marcaTexto: {
@@ -653,10 +656,10 @@ const styles = StyleSheet.create({
     paddingBottom: 22,
   },
   heroPanel: {
-    backgroundColor: "rgba(15, 23, 42, 0.50)",
+    backgroundColor: "rgba(15, 23, 42, 0.55)",
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
+    borderColor: "rgba(255,255,255,0.18)",
     padding: 14,
     paddingBottom: 14,
   },
@@ -708,6 +711,9 @@ const styles = StyleSheet.create({
   chipsSeccion: {
     paddingTop: 18,
     paddingBottom: 4,
+    // Compensa el paddingHorizontal de la lista: los chips ya tienen su propio
+    // relleno lateral de 16px y así quedan alineados con el contenido del hero.
+    marginHorizontal: -8,
   },
   chips: {
     paddingHorizontal: 16,
