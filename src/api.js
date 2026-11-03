@@ -200,16 +200,18 @@ export async function eliminarLugar(idLugar, token) {
  * Sube una foto local del teléfono a la API (/api/archivos, multipart igual
  * que en el admin web) y devuelve la URL que la API asignó al archivo.
  *
- * Se usa fetch + FormData (API estándar de React Native) en lugar de
- * expo-file-system: en la versión 58 de expo-file-system, uploadAsync del
- * entry principal está deprecado y lanza error en runtime, por lo que la
- * subida fallaba siempre. Con FormData NO se manda Content-Type a mano —
- * fetch agrega el boundary del multipart automáticamente.
+ * La implementación nueva de FormData en React Native 0.88 (SDK 58) ya no
+ * acepta el objeto { uri, name, type } y lanza "unsupported formdatapart
+ * implementation". Por eso usamos el uploader multipart nativo que Expo
+ * incluye en expo-file-system/legacy (el del entry principal está deprecado
+ * y lanza error en runtime).
  */
 export async function subirArchivo(uri, token) {
+  const { uploadAsync, FileSystemUploadType } = await import("expo-file-system/legacy");
+
   const nombre = uri.split("/").pop() || `foto-${Date.now()}.jpg`;
   const extension = (nombre.split(".").pop() || "jpg").toLowerCase();
-  const tipo =
+  const mimeType =
     extension === "png"
       ? "image/png"
       : extension === "webp"
@@ -218,21 +220,19 @@ export async function subirArchivo(uri, token) {
           ? "image/gif"
           : "image/jpeg";
 
-  const formData = new FormData();
-  formData.append("archivo", { uri, name: nombre, type: tipo });
-
-  const respuesta = await fetch(`${API_URL}/archivos`, {
-    method: "POST",
+  const respuesta = await uploadAsync(`${API_URL}/archivos`, uri, {
+    httpMethod: "POST",
+    uploadType: FileSystemUploadType.MULTIPART,
+    fieldName: "archivo",
+    mimeType,
     headers: {
       Authorization: `Bearer ${token}`,
     },
-    body: formData,
   });
 
-  const texto = await respuesta.text();
-  const resultado = texto ? parsearJsonSeguro(texto) : null;
+  const resultado = respuesta.body ? parsearJsonSeguro(respuesta.body) : null;
 
-  if (!respuesta.ok) {
+  if (respuesta.status < 200 || respuesta.status >= 300) {
     throw new Error(
       (resultado && resultado.mensaje) || `Error subiendo la imagen (${respuesta.status})`
     );
