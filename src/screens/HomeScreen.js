@@ -11,6 +11,7 @@ import {
   ScrollView,
   StatusBar,
   Animated,
+  RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -31,6 +32,9 @@ const FOTOS_HERO = [
 
 export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuevoLugar, onCerrarSesion }) {
   const refLista = useRef(null);
+  // Identifica cada petición para descartar respuestas obsoletas cuando el
+  // usuario escribe rápido o cambia de filtro mientras una carga está en vuelo.
+  const peticionRef = useRef(0);
   // Respeto la "zona segura" del teléfono: reloj, wifi y batería arriba
   const insets = useSafeAreaInsets();
   const [lugares, setLugares] = useState([]);
@@ -50,6 +54,7 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
 
   // ---------- Carga de datos ----------
   const cargarLugares = useCallback(async (paginaDestino = 1, filtros) => {
+    const idPeticion = ++peticionRef.current;
     try {
       if (paginaDestino === 1) {
         setCargando(true);
@@ -58,6 +63,8 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
       }
       setError(null);
       const data = await obtenerLugares({ ...filtros, pagina: paginaDestino });
+      if (idPeticion !== peticionRef.current) return; // llegó tarde: la ignoramos
+
       const nuevos = data.lugares || [];
       const pag = data.paginacion || {};
       setTotalPaginas(pag.totalPaginas || 1);
@@ -68,10 +75,13 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
         setLugares((prev) => [...prev, ...nuevos]);
       }
     } catch (err) {
+      if (idPeticion !== peticionRef.current) return;
       setError(err.message || "No se pudieron cargar los lugares");
     } finally {
-      setCargando(false);
-      setCargandoMas(false);
+      if (idPeticion === peticionRef.current) {
+        setCargando(false);
+        setCargandoMas(false);
+      }
     }
   }, []);
 
@@ -95,9 +105,9 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
     setFavoritos(nuevos);
   }, []);
 
-  // Primera carga
+  // Al montar: categorías, favoritos y precarga del hero. Los lugares los
+  // carga el efecto de filtros (más abajo), que también cubre la primera vez.
   useEffect(() => {
-    cargarLugares(1, {});
     cargarCategorias();
     cargarFavoritos();
     // Precarga las 6 fotos del hero al abrir: sin ellas, el fundido
@@ -105,17 +115,16 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
     Promise.all(FOTOS_HERO.map((url) => Image.prefetch(url))).catch(() => {});
   }, []);
 
-  // Búsqueda en vivo (con pequeño retardo, como en la web)
+  // Búsqueda/filtros en vivo (con pequeño retardo, como en la web).
+  // Siempre recarga desde la página 1: antes, si el usuario ya había paginado
+  // ("Ver más"), el filtro se ignoraba hasta la siguiente pulsación de tecla.
   useEffect(() => {
     const t = setTimeout(() => {
-      if (pagina === 1) {
-        cargarLugares(1, { buscar, idCategoria });
-      } else {
-        setPagina(1); // al cambiar filtros, volvemos a la página 1
-      }
+      setPagina(1);
+      cargarLugares(1, { buscar, idCategoria });
     }, 400);
     return () => clearTimeout(t);
-  }, [buscar, idCategoria]);
+  }, [buscar, idCategoria, cargarLugares]);
 
   // ---------- Crossfade del hero (fundido suave, como el sitio web) ----------
   // Mismo ritmo que la web: 6 segundos por foto, y el cambio se hace con un
@@ -144,6 +153,13 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
   const lugaresVisibles = soloFavoritos
     ? lugares.filter((l) => favoritos.has(l.idLugar))
     : lugares;
+
+  // Con numColumns=2, si la última fila tiene un solo elemento la tarjeta se
+  // estira a todo el ancho. Añadimos un hueco invisible para mantener la rejilla.
+  const datosLista =
+    lugaresVisibles.length % 2 === 1
+      ? [...lugaresVisibles, { idLugar: "__relleno__", __relleno: true }]
+      : lugaresVisibles;
 
   if (cargando && lugares.length === 0) {
     return (
@@ -252,19 +268,31 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
             </View>
           </View>
         }
-        data={lugaresVisibles}
-        keyExtractor={(item) => item.idLugar.toString()}
-        renderItem={({ item }) => (
-          <LugarCard
-            lugar={item}
-            favorito={favoritos.has(item.idLugar)}
-            onAlternarFavorito={() => alTocarFavorito(item.idLugar)}
-            onPress={() => onVerDetalle(item)}
-          />
-        )}
+        data={datosLista}
+        keyExtractor={(item) => (item.__relleno ? "relleno" : item.idLugar.toString())}
+        renderItem={({ item }) =>
+          item.__relleno ? (
+            <View style={styles.tarjetaRelleno} />
+          ) : (
+            <LugarCard
+              lugar={item}
+              favorito={favoritos.has(item.idLugar)}
+              onAlternarFavorito={() => alTocarFavorito(item.idLugar)}
+              onPress={() => onVerDetalle(item)}
+            />
+          )
+        }
         numColumns={2}
         columnWrapperStyle={styles.filaTarjetas}
         contentContainerStyle={styles.lista}
+        refreshControl={
+          <RefreshControl
+            refreshing={cargando && lugares.length > 0}
+            onRefresh={() => cargarLugares(1, { buscar, idCategoria })}
+            colors={[colores.primario]}
+            tintColor={colores.primario}
+          />
+        }
         ListEmptyComponent={
           <Text style={styles.sinResultados}>
             {soloFavoritos
@@ -585,6 +613,10 @@ const styles = StyleSheet.create({
   },
   filaTarjetas: {
     justifyContent: "space-between",
+  },
+  tarjetaRelleno: {
+    flex: 1,
+    margin: 8,
   },
   sinResultados: {
     textAlign: "center",

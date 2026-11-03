@@ -1,8 +1,15 @@
-import React, { useState, useEffect } from "react";
-import { SafeAreaView, StyleSheet, StatusBar, ActivityIndicator, View, Text, Alert } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  StyleSheet,
+  StatusBar,
+  ActivityIndicator,
+  View,
+  Text,
+  Alert,
+  BackHandler,
+} from "react-native";
 import { useFonts } from "@expo-google-fonts/poppins";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import {
   Poppins_400Regular,
   Poppins_500Medium,
@@ -14,10 +21,9 @@ import HomeScreen from "./src/screens/HomeScreen";
 import DetalleScreen from "./src/screens/DetalleScreen";
 import LoginScreen from "./src/screens/LoginScreen";
 import FormularioLugarScreen from "./src/screens/FormularioLugarScreen";
-import { eliminarLugar } from "./src/api";
+import { eliminarLugar, configurarManejadorNoAutorizado } from "./src/api";
+import { obtenerToken, guardarToken, borrarToken } from "./src/almacenamiento";
 import { colores, fuentes } from "./src/theme";
-
-const LLAVE_TOKEN = "token";
 
 export default function App() {
   const [token, setToken] = useState(null);
@@ -25,12 +31,14 @@ export default function App() {
   const [mostrarLogin, setMostrarLogin] = useState(false);
   const [lugarSeleccionado, setLugarSeleccionado] = useState(null);
   const [modoFormulario, setModoFormulario] = useState(null); // null | {} | {lugar}
+  // Evita mostrar varias veces el aviso si llegan varios 401 en paralelo.
+  const avisoExpiradoRef = useRef(false);
 
   // Al arrancar: recuperar la sesión guardada en el teléfono (si ya entró antes)
   useEffect(() => {
     (async () => {
       try {
-        const guardado = await AsyncStorage.getItem(LLAVE_TOKEN);
+        const guardado = await obtenerToken();
         if (guardado) setToken(guardado);
       } catch {
         // sin token guardado: arranca como visitante
@@ -50,25 +58,58 @@ export default function App() {
   });
 
   const iniciarSesion = async (t) => {
+    avisoExpiradoRef.current = false;
     setToken(t);
     setMostrarLogin(false);
-    try {
-      await AsyncStorage.setItem(LLAVE_TOKEN, t);
-    } catch {
-      // si no se puede guardar, la sesión vive igual mientras la app está abierta
-    }
+    await guardarToken(t);
   };
 
   const cerrarSesion = async () => {
     setToken(null);
     setModoFormulario(null);
     setLugarSeleccionado(null);
-    try {
-      await AsyncStorage.removeItem(LLAVE_TOKEN);
-    } catch {
-      // nada grave si falla el borrado local
-    }
+    await borrarToken();
   };
+
+  // Si cualquier petición admin responde 401 (token vencido), cerramos la
+  // sesión y avisamos una sola vez. Se registra una vez al montar.
+  useEffect(() => {
+    configurarManejadorNoAutorizado(() => {
+      setToken(null);
+      setModoFormulario(null);
+      setLugarSeleccionado(null);
+      setMostrarLogin(true);
+      borrarToken();
+      if (!avisoExpiradoRef.current) {
+        avisoExpiradoRef.current = true;
+        Alert.alert(
+          "Sesión expirada",
+          "Tu sesión caducó por seguridad. Vuelve a entrar."
+        );
+      }
+    });
+  }, []);
+
+  // Botón físico "atrás" de Android: retrocede dentro de la app en vez de
+  // cerrarla de golpe cuando estás en detalle, formulario o login.
+  useEffect(() => {
+    const suscripcion = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (modoFormulario) {
+        setModoFormulario(null);
+        return true;
+      }
+      if (mostrarLogin) {
+        setMostrarLogin(false);
+        return true;
+      }
+      if (lugarSeleccionado) {
+        setLugarSeleccionado(null);
+        return true;
+      }
+      return false; // en Home, permitimos que Android cierre la app
+    });
+    return () => suscripcion.remove();
+  }, [modoFormulario, mostrarLogin, lugarSeleccionado]);
 
   const confirmarEliminar = (lugar) => {
     Alert.alert(
@@ -95,17 +136,21 @@ export default function App() {
 
   if (!fuentesCargadas || !sesionCargada) {
     return (
-      <SafeAreaView style={[styles.contenedor, styles.centro]}>
-        <StatusBar barStyle="light-content" backgroundColor={colores.primarioOscuro} />
-        <ActivityIndicator size="large" color={colores.primario} />
-        <Text style={styles.cargandoTexto}>Preparando la Sabana…</Text>
-      </SafeAreaView>
+      <SafeAreaProvider>
+        <SafeAreaView style={[styles.contenedor, styles.centro]}>
+          <StatusBar barStyle="light-content" backgroundColor={colores.primarioOscuro} />
+          <ActivityIndicator size="large" color={colores.primario} />
+          <Text style={styles.cargandoTexto}>Preparando la Sabana…</Text>
+        </SafeAreaView>
+      </SafeAreaProvider>
     );
   }
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={styles.contenedor}>
+      {/* edges sin "top": el héroe se dibuja a sangre por debajo de la barra
+          de estado y cada pantalla usa los insets para colocar su contenido. */}
+      <SafeAreaView style={styles.contenedor} edges={["left", "right", "bottom"]}>
         <StatusBar barStyle="light-content" backgroundColor={colores.primarioOscuro} />
 
         {modoFormulario ? (

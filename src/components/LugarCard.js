@@ -7,40 +7,40 @@ export default function LugarCard({ lugar, onPress, favorito, onAlternarFavorito
   const urlImagen = obtenerUrlImagen(lugar.imagen);
 
   return (
-    <TouchableOpacity
-      style={[styles.card, sombras.reposo]}
-      onPress={onPress}
-      activeOpacity={0.85}
-    >
-      {urlImagen ? (
-        <Image
-          source={{ uri: urlImagen }}
-          style={styles.imagen}
-          resizeMode="cover"
-        />
-      ) : (
-        <View style={[styles.imagen, styles.imagenVacia]}>
-          <Text style={styles.imagenVaciaTexto}>📷</Text>
-        </View>
-      )}
+    <View style={[styles.card, sombras.reposo]}>
+      <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
+        {urlImagen ? (
+          <Image
+            source={{ uri: urlImagen }}
+            style={styles.imagen}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={[styles.imagen, styles.imagenVacia]}>
+            <Text style={styles.imagenVaciaTexto}>📷</Text>
+          </View>
+        )}
 
-      {/* Corazón de favorito, como el .btn-favorito de la web */}
+        <View style={styles.contenido}>
+          <Text style={styles.titulo}>{lugar.nombre}</Text>
+          <Text style={styles.categoria}>{lugar.categoria}</Text>
+          <Text style={styles.direccion}>📍 {lugar.direccion}</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* Corazón de favorito, como el .btn-favorito de la web.
+          Va como hermano (no anidado) para que tocar el corazón no abra el detalle. */}
       <TouchableOpacity
         style={styles.botonFavorito}
         onPress={onAlternarFavorito}
         activeOpacity={0.8}
+        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
       >
         <Text style={styles.botonFavoritoTexto}>
           {favorito ? "❤️" : "🤍"}
         </Text>
       </TouchableOpacity>
-
-      <View style={styles.contenido}>
-        <Text style={styles.titulo}>{lugar.nombre}</Text>
-        <Text style={styles.categoria}>{lugar.categoria}</Text>
-        <Text style={styles.direccion}>📍 {lugar.direccion}</Text>
-      </View>
-    </TouchableOpacity>
+    </View>
   );
 }
 
