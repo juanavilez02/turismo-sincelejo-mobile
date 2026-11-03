@@ -48,9 +48,18 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
   const categoriaCargadaRef = useRef(false);
   // Respeto la "zona segura" del teléfono: reloj, wifi y batería arriba
   const insets = useSafeAreaInsets();
-  // Hero de borde a borde, con la misma proporción envolvente que la web (88vh)
+  // Hero de borde a borde, con la misma proporción envolvente que la web.
+  // 82% deja asomar los filtros al abrir (88vh en web tapaba toda la lista).
   const { height: altoPantalla } = useWindowDimensions();
-  const alturaHeroe = Math.max(460, Math.round(altoPantalla * 0.88));
+  const alturaHeroe = Math.max(460, Math.round(altoPantalla * 0.82));
+
+  // Scroll del listado: el header fijo se vuelve sólido al bajar.
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const opacidadBarraFija = scrollY.interpolate({
+    inputRange: [40, 120],
+    outputRange: [0, 1],
+    extrapolate: "clamp",
+  });
 
   // Recuperamos los filtros de la última visita a la lista para volver a la
   // misma categoría/búsqueda/favoritos al regresar del detalle.
@@ -297,6 +306,11 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
 
       <FlatList
         ref={refLista}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
         ListHeaderComponent={
           <View>
             {/* ============ HERO (réplica del hero web) ============ */}
@@ -328,23 +342,7 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
                 style={styles.heroGradiente}
               />
 
-              <View style={styles.heroInner}>
-                {/* Header dentro del hero, con safe-area para no chocar con la hora */}
-                <View style={[styles.heroHeader, { paddingTop: insets.top + 10 }]}>
-                  <Text style={styles.marcaTexto}>
-                    Turismo<Text style={styles.marcaFuerte}>Sincelejo</Text>
-                  </Text>
-                  <TouchableOpacity
-                    style={[styles.botonLogin, esAdmin && styles.botonLoginAdmin]}
-                    onPress={esAdmin ? onCerrarSesion : onAbrirLogin}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.botonLoginTexto}>
-                      {esAdmin ? "🚪 Salir" : "⚙ Acceso"}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-
+              <View style={[styles.heroInner, { paddingTop: insets.top + 64 }]}>
                 {/* Texto directamente sobre la foto, sin tarjeta ni sombra */}
                 <View style={styles.heroCentro}>
                   <Text style={styles.heroUbicacion}>
@@ -369,7 +367,7 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
                     placeholderTextColor={colores.tintaSuave}
                     value={buscar}
                     onChangeText={setBuscar}
-                    onFocus={() => refLista.current?.scrollToOffset({ animated: true, offset: 140 })}
+                    onFocus={() => refLista.current?.scrollToOffset({ animated: true, offset: Math.max(0, alturaHeroe - 160) })}
                   />
                 </View>
               </View>
@@ -493,6 +491,29 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
         }
       />
 
+      {/* ============ HEADER FIJO (navbar web): transparente sobre el hero y
+          sólido al hacer scroll, siempre disponible ============ */}
+      <View style={styles.barraFija}>
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.barraFijaFondo, { opacity: opacidadBarraFija }]}
+        />
+        <View style={[styles.barraFijaContenido, { paddingTop: insets.top + 10 }]}>
+          <Text style={styles.marcaTexto}>
+            Turismo<Text style={styles.marcaFuerte}>Sincelejo</Text>
+          </Text>
+          <TouchableOpacity
+            style={[styles.botonLogin, esAdmin && styles.botonLoginAdmin]}
+            onPress={esAdmin ? onCerrarSesion : onAbrirLogin}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.botonLoginTexto}>
+              {esAdmin ? "🚪 Salir" : "⚙ Acceso"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       {error && lugares.length > 0 && (
         <Text style={styles.errorFlotante}>{error}</Text>
       )}
@@ -588,17 +609,31 @@ const styles = StyleSheet.create({
   heroGradiente: {
     ...StyleSheet.absoluteFillObject,
   },
-  // Contenido del hero: header arriba, texto al centro y buscador al final
+  // Contenido del hero: texto al centro y buscador al final
   heroInner: {
     flex: 1,
     justifyContent: "space-between",
   },
-  heroHeader: {
+  // Header fijo: transparente arriba (texto sobre la foto) y fondo sólido al bajar
+  barraFija: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 20,
+  },
+  barraFijaFondo: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(15, 23, 42, 0.94)",
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.08)",
+  },
+  barraFijaContenido: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingBottom: 10,
   },
   marcaTexto: {
     color: colores.blanco,
