@@ -51,10 +51,12 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
   const categoriaCargadaRef = useRef(false);
   // Respeto la "zona segura" del teléfono: reloj, wifi y batería arriba
   const insets = useSafeAreaInsets();
-  // Hero de borde a borde, con la misma proporción envolvente que la web.
-  // 82% deja asomar los filtros al abrir (88vh en web tapaba toda la lista).
-  const { height: altoPantalla } = useWindowDimensions();
-  const alturaHeroe = Math.max(460, Math.round(altoPantalla * 0.82));
+  // Hero responsivo: se ajusta a su contenido (compacto, sin ocupar media
+  // pantalla) y la tipografía escala según el ancho del teléfono.
+  const { width: anchoPantalla } = useWindowDimensions();
+  const tamTituloHeroe = Math.round(
+    Math.min(44, Math.max(30, anchoPantalla * 0.105))
+  );
 
   // Scroll del listado: el header fijo se vuelve sólido al bajar.
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -317,7 +319,7 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
         ListHeaderComponent={
           <View>
             {/* ============ HERO (réplica del hero web) ============ */}
-            <View style={[styles.hero, { height: alturaHeroe }]}>
+            <View style={styles.hero}>
               {/* La foto vive SOLO dentro del hero (capa base + crossfade) */}
               <View style={styles.capaHero}>
                 <Image
@@ -351,7 +353,15 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
                   <Text style={styles.heroUbicacion}>
                     📍 Sincelejo · Sucre · Colombia
                   </Text>
-                  <Text style={styles.heroTitulo}>
+                  <Text
+                    style={[
+                      styles.heroTitulo,
+                      {
+                        fontSize: tamTituloHeroe,
+                        lineHeight: Math.round(tamTituloHeroe * 1.1),
+                      },
+                    ]}
+                  >
                     Descubre la{"\n"}
                     <Text style={styles.heroDestacado}>Sabana</Text> y su gente
                   </Text>
@@ -362,16 +372,18 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
                 </View>
 
                 {/* Buscador al final del hero, con 16px laterales */}
-                <View style={styles.heroBuscador}>
-                  <Text style={styles.heroLupa}>🔍</Text>
-                  <TextInput
-                    style={styles.heroInput}
-                    placeholder="Busca mientras escribes: majagual, catedral, pozo..."
-                    placeholderTextColor={colores.tintaSuave}
-                    value={buscar}
-                    onChangeText={setBuscar}
-                    onFocus={() => refLista.current?.scrollToOffset({ animated: true, offset: Math.max(0, alturaHeroe - 160) })}
-                  />
+                <View style={styles.heroBuscadorWrap}>
+                  <View style={styles.heroBuscador}>
+                    <Text style={styles.heroLupa}>🔍</Text>
+                    <TextInput
+                      style={styles.heroInput}
+                      placeholder="Busca mientras escribes: majagual, catedral, pozo..."
+                      placeholderTextColor={colores.tintaSuave}
+                      value={buscar}
+                      onChangeText={setBuscar}
+                      onFocus={() => refLista.current?.scrollToOffset({ animated: true, offset: 200 })}
+                    />
+                  </View>
                 </View>
               </View>
             </View>
@@ -612,10 +624,9 @@ const styles = StyleSheet.create({
   heroGradiente: {
     ...StyleSheet.absoluteFillObject,
   },
-  // Contenido del hero: texto al centro y buscador al final
+  // Contenido del hero: compacto y adaptable al contenido (sin altura fija)
   heroInner: {
-    flex: 1,
-    justifyContent: "space-between",
+    width: "100%",
   },
   // Header fijo: transparente arriba (texto sobre la foto) y fondo sólido al bajar
   barraFija: {
@@ -636,11 +647,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingBottom: 10,
+    paddingBottom: 8,
   },
   marcaTexto: {
     color: colores.blanco,
-    fontSize: 19,
+    fontSize: 18,
     fontFamily: fuentes.bold,
     letterSpacing: -0.4,
   },
@@ -650,13 +661,13 @@ const styles = StyleSheet.create({
   },
   botonLogin: {
     backgroundColor: "rgba(15, 23, 42, 0.82)",
-    paddingHorizontal: 16,
-    paddingVertical: 9,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: radio.pill,
   },
   botonLoginTexto: {
     color: colores.blanco,
-    fontSize: 13,
+    fontSize: 12.5,
     fontFamily: fuentes.medio,
   },
   botonLoginAdmin: {
@@ -678,17 +689,19 @@ const styles = StyleSheet.create({
   },
   // Texto directamente sobre la foto: sin tarjeta, borde ni sombra
   heroCentro: {
-    flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    width: "100%",
+    maxWidth: 720,
+    alignSelf: "center",
     paddingHorizontal: 16,
   },
   heroUbicacion: {
     color: "#FFFFFF",
-    fontSize: 13,
+    fontSize: 12.5,
     fontFamily: fuentes.medio,
     letterSpacing: 0.4,
-    marginBottom: 14,
+    marginBottom: 12,
     textAlign: "center",
     opacity: 0.95,
   },
@@ -699,19 +712,26 @@ const styles = StyleSheet.create({
     fontFamily: fuentes.extrabold,
     letterSpacing: -1.2,
     textAlign: "center",
-    marginBottom: 14,
+    marginBottom: 12,
   },
   heroDestacado: {
     color: colores.acento,
   },
   heroParrafo: {
     color: "#FFFFFF",
-    fontSize: 15,
-    lineHeight: 23,
+    fontSize: 14.5,
+    lineHeight: 22,
     fontFamily: fuentes.regular,
     textAlign: "center",
     opacity: 0.92,
     maxWidth: 560,
+  },
+  // Envoltorio con 16px laterales: el buscador queda centrado y con ancho máximo
+  heroBuscadorWrap: {
+    width: "100%",
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 24,
   },
   heroBuscador: {
     flexDirection: "row",
@@ -719,10 +739,10 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.96)",
     borderRadius: radio.pill,
     paddingHorizontal: 16,
-    height: 52,
-    // Alineado con chips y tarjetas (16px) y separado del borde inferior del hero
-    marginHorizontal: 16,
-    marginBottom: 24,
+    height: 50,
+    width: "100%",
+    maxWidth: 560,
+    alignSelf: "center",
     shadowColor: "#000000",
     shadowOpacity: 0.3,
     shadowRadius: 20,
