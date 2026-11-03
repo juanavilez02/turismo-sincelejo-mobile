@@ -161,6 +161,20 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
       ? [...lugaresVisibles, { idLugar: "__relleno__", __relleno: true }]
       : lugaresVisibles;
 
+  // Elegir una categoría SIEMPRE sale de la vista de favoritos. Antes
+  // `soloFavoritos` quedaba activo y la lista seguía filtrada a favoritos,
+  // dando la sensación de que las demás categorías no respondían.
+  const seleccionarCategoria = (id) => {
+    setSoloFavoritos(false);
+    setIdCategoria(id);
+  };
+
+  // Entrar a favoritos muestra todos los favoritos (sin categoría seleccionada).
+  const alternarVistaFavoritos = () => {
+    if (!soloFavoritos) setIdCategoria(0);
+    setSoloFavoritos(!soloFavoritos);
+  };
+
   if (cargando && lugares.length === 0) {
     return (
       <View style={[styles.contenedor, styles.centro]}>
@@ -248,21 +262,21 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
               >
                 <Chip
                   etiqueta="Todos"
-                  activo={!idCategoria}
-                  onPress={() => setIdCategoria(0)}
+                  activo={!soloFavoritos && !idCategoria}
+                  onPress={() => seleccionarCategoria(0)}
                 />
                 {categorias.map((cat) => (
                   <Chip
                     key={cat.idCategoria}
                     etiqueta={`${cat.nombre}`}
-                    activo={idCategoria === cat.idCategoria}
-                    onPress={() => setIdCategoria(cat.idCategoria)}
+                    activo={!soloFavoritos && idCategoria === cat.idCategoria}
+                    onPress={() => seleccionarCategoria(cat.idCategoria)}
                   />
                 ))}
                 <Chip
                   etiqueta="❤️ Mis favoritos"
                   activo={soloFavoritos}
-                  onPress={() => setSoloFavoritos(!soloFavoritos)}
+                  onPress={alternarVistaFavoritos}
                 />
               </ScrollView>
             </View>
