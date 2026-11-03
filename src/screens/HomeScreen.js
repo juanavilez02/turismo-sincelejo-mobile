@@ -35,6 +35,12 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
   // Identifica cada petición para descartar respuestas obsoletas cuando el
   // usuario escribe rápido o cambia de filtro mientras una carga está en vuelo.
   const peticionRef = useRef(0);
+  // A partir de la primera carga lograda ya no mostramos el loader a pantalla
+  // completa: los cambios de categoría usan un indicador dentro de la lista.
+  const cargaInicialHechaRef = useRef(false);
+  // Marca que la categoría se cargó al instante, para que el efecto de filtros
+  // no repita la misma petición 400 ms después.
+  const categoriaCargadaRef = useRef(false);
   // Respeto la "zona segura" del teléfono: reloj, wifi y batería arriba
   const insets = useSafeAreaInsets();
   const [lugares, setLugares] = useState([]);
@@ -65,6 +71,7 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
       const data = await obtenerLugares({ ...filtros, pagina: paginaDestino });
       if (idPeticion !== peticionRef.current) return; // llegó tarde: la ignoramos
 
+      cargaInicialHechaRef.current = true;
       const nuevos = data.lugares || [];
       const pag = data.paginacion || {};
       setTotalPaginas(pag.totalPaginas || 1);
@@ -119,6 +126,11 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
   // Siempre recarga desde la página 1: antes, si el usuario ya había paginado
   // ("Ver más"), el filtro se ignoraba hasta la siguiente pulsación de tecla.
   useEffect(() => {
+    // Si el cambio vino de una categoría, ya se cargó al instante en el handler.
+    if (categoriaCargadaRef.current) {
+      categoriaCargadaRef.current = false;
+      return;
+    }
     const t = setTimeout(() => {
       setPagina(1);
       cargarLugares(1, { buscar, idCategoria });
@@ -172,13 +184,16 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
     // Invalida cualquier petición en vuelo de la categoría anterior.
     peticionRef.current += 1;
 
-    // Vaciamos la lista en el acto: si no, durante la carga se seguirían
-    // viendo los lugares de la categoría anterior y luego "saltarían" a los
-    // nuevos. Con esto se muestra el cargador hasta tener la respuesta correcta.
+    // Vaciamos la lista para no mostrar la categoría anterior, pero sin sacar
+    // al usuario de la pantalla: el hero y los chips siguen visibles.
     setLugares([]);
     setPagina(1);
-    setCargando(true);
     setIdCategoria(id);
+
+    // Cargamos al instante (sin el retardo de 400 ms que sí usa el buscador)
+    // y avisamos al efecto de filtros de que no repita la petición.
+    categoriaCargadaRef.current = true;
+    cargarLugares(1, { buscar, idCategoria: id });
   };
 
   // Entrar a favoritos muestra todos los favoritos (sin categoría seleccionada).
@@ -187,7 +202,9 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
     setSoloFavoritos(!soloFavoritos);
   };
 
-  if (cargando && lugares.length === 0) {
+  // El loader a pantalla completa solo aparece en el primer arranque. Después
+  // (p. ej. al cambiar de categoría) usamos el indicador dentro de la lista.
+  if (cargando && lugares.length === 0 && !cargaInicialHechaRef.current) {
     return (
       <View style={[styles.contenedor, styles.centro]}>
         <ActivityIndicator size="large" color={colores.primario} />
@@ -320,11 +337,18 @@ export default function HomeScreen({ onVerDetalle, onAbrirLogin, esAdmin, onNuev
           />
         }
         ListEmptyComponent={
-          <Text style={styles.sinResultados}>
-            {soloFavoritos
-              ? "Aún no guardas favoritos. Toca el 🤍 en cualquier lugar. ❤️"
-              : "No encontramos lugares con esos filtros 🧭"}
-          </Text>
+          cargando ? (
+            <View style={styles.cargandoLista}>
+              <ActivityIndicator color={colores.primario} />
+              <Text style={styles.textoCargando}>Cargando lugares…</Text>
+            </View>
+          ) : (
+            <Text style={styles.sinResultados}>
+              {soloFavoritos
+                ? "Aún no guardas favoritos. Toca el 🤍 en cualquier lugar. ❤️"
+                : "No encontramos lugares con esos filtros 🧭"}
+            </Text>
+          )
         }
         ListFooterComponent={
           <View>
@@ -643,6 +667,11 @@ const styles = StyleSheet.create({
   tarjetaRelleno: {
     flex: 1,
     margin: 8,
+  },
+  cargandoLista: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
   },
   sinResultados: {
     textAlign: "center",
