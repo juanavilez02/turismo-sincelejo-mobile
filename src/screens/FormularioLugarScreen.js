@@ -11,10 +11,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Linking,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { obtenerCategorias, crearLugar, actualizarLugar, obtenerUrlImagen, subirArchivo } from "../api";
+import { construirUrlComoLlegar } from "../mapsUrl";
 import { colores, radio, sombras, fuentes } from "../theme";
 
 export default function FormularioLugarScreen({ lugar, token, onGuardar, onCancelar }) {
@@ -116,6 +118,17 @@ export default function FormularioLugarScreen({ lugar, token, onGuardar, onCance
 
   const preview = imagenUrl ? obtenerUrlImagen(imagenUrl) : null;
 
+  // Abre Google Maps sobre la dirección recién escrita: si el pin cae en el
+  // lugar correcto, los visitantes llegarán directo a ese mismo sitio.
+  const probarEnMaps = () => {
+    if (!direccion.trim()) {
+      Alert.alert("Falta la dirección", "Escribe primero la dirección para probarla en Google Maps.");
+      return;
+    }
+    const url = construirUrlComoLlegar(direccion);
+    if (url) Linking.openURL(url);
+  };
+
   return (
     <View style={styles.contenedor}>
       <KeyboardAvoidingView
@@ -174,6 +187,13 @@ export default function FormularioLugarScreen({ lugar, token, onGuardar, onCance
             value={direccion}
             onChangeText={setDireccion}
           />
+          <Text style={styles.ayudaMapa}>
+            📍 Escríbela igual que aparece en Google Maps (lugar → "Copiar dirección"). 
+            Los visitantes llegarán directo a ese punto con "Cómo llegar".
+          </Text>
+          <TouchableOpacity style={styles.botonProbarMapa} onPress={probarEnMaps} activeOpacity={0.85}>
+            <Text style={styles.botonProbarMapaTexto}>🧭 Probar dirección en Google Maps</Text>
+          </TouchableOpacity>
 
           <Text style={styles.etiqueta}>Horario</Text>
           <TextInput
@@ -350,6 +370,29 @@ const styles = StyleSheet.create({
   inputArea: {
     height: 110,
     textAlignVertical: "top",
+  },
+  ayudaMapa: {
+    color: colores.tintaSuave,
+    fontFamily: fuentes.regular,
+    fontSize: 12,
+    lineHeight: 17,
+    marginBottom: 8,
+    marginTop: -10,
+  },
+  botonProbarMapa: {
+    alignSelf: "flex-start",
+    backgroundColor: colores.primarioSuave,
+    borderWidth: 1,
+    borderColor: colores.primario,
+    borderRadius: radio.pill,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    marginBottom: 16,
+  },
+  botonProbarMapaTexto: {
+    color: colores.primarioOscuro,
+    fontFamily: fuentes.semibold,
+    fontSize: 12.5,
   },
   chip: {
     backgroundColor: colores.superficie,

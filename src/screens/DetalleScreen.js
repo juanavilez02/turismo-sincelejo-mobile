@@ -13,6 +13,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { obtenerUrlImagen } from "../api";
+import { construirUrlComoLlegar } from "../mapsUrl";
 import { colores, radio, sombras, fuentes } from "../theme";
 
 // Emojis de categorias: exactamente los del sitio web (Frontend/app.js)
@@ -31,10 +32,9 @@ export default function DetalleScreen({ lugar, onVolver, esAdmin, onEditar, onEl
   const urlImagen = obtenerUrlImagen(lugar.imagen);
   const emoji = EMOJIS_CATEGORIAS[lugar.categoria] ?? "📍";
 
-  // Mismo enlace de Google Maps que construye la web para "Cómo llegar"
-  const urlMapa = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    `${lugar.nombre} Sincelejo ${lugar.direccion}`
-  )}`;
+  // Enlace "Cómo llegar": destino = dirección exacta (+ ciudad si falta),
+  // para que Google Maps aterrice en el sitio correcto y no en una búsqueda vaga.
+  const urlMapa = construirUrlComoLlegar(lugar.direccion);
 
   return (
     <View style={styles.contenedor}>
@@ -86,7 +86,7 @@ export default function DetalleScreen({ lugar, onVolver, esAdmin, onEditar, onEl
           {/* CTA "Cómo llegar": mismo comportamiento del botón de la web */}
           <TouchableOpacity
             style={styles.botonMapa}
-            onPress={() => Linking.openURL(urlMapa)}
+            onPress={() => urlMapa && Linking.openURL(urlMapa)}
             activeOpacity={0.85}
           >
             <Text style={styles.botonMapaTexto}>🗺️ Cómo llegar</Text>
